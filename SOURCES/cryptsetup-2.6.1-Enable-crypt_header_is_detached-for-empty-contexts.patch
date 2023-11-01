@@ -1,0 +1,55 @@
+From be088b8de8d636993767a42f195ffd3bf915e567 Mon Sep 17 00:00:00 2001
+From: Ondrej Kozina <okozina@redhat.com>
+Date: Mon, 12 Dec 2022 17:33:12 +0100
+Subject: [PATCH 1/2] Enable crypt_header_is_detached for empty contexts.
+
+Also changes few tests now expecting crypt_header_is_detached
+works with empty contexts.
+---
+ lib/setup.c        | 2 +-
+ tests/api-test-2.c | 2 +-
+ tests/api-test.c   | 2 +-
+ 3 files changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/lib/setup.c b/lib/setup.c
+index f169942c..3263578b 100644
+--- a/lib/setup.c
++++ b/lib/setup.c
+@@ -3242,7 +3242,7 @@ int crypt_header_is_detached(struct crypt_device *cd)
+ {
+ 	int r;
+ 
+-	if (!cd || !isLUKS(cd->type))
++	if (!cd || (cd->type && !isLUKS(cd->type)))
+ 		return -EINVAL;
+ 
+ 	r = device_is_identical(crypt_data_device(cd), crypt_metadata_device(cd));
+diff --git a/tests/api-test-2.c b/tests/api-test-2.c
+index 2c39191b..c7e930ca 100644
+--- a/tests/api-test-2.c
++++ b/tests/api-test-2.c
+@@ -889,7 +889,7 @@ static void AddDeviceLuks2(void)
+ 	FAIL_(crypt_activate_by_volume_key(cd, CDEVICE_2, key, key_size, 0), "Device is active");
+ 	EQ_(crypt_status(cd, CDEVICE_2), CRYPT_INACTIVE);
+ 	OK_(crypt_deactivate(cd, CDEVICE_1));
+-	FAIL_(crypt_header_is_detached(cd), "no header for mismatched device");
++	EQ_(crypt_header_is_detached(cd), 1);
+ 	CRYPT_FREE(cd);
+ 
+ 	params.data_device = NULL;
+diff --git a/tests/api-test.c b/tests/api-test.c
+index 9bb6d2f1..f6e33a40 100644
+--- a/tests/api-test.c
++++ b/tests/api-test.c
+@@ -960,7 +960,7 @@ static void AddDeviceLuks(void)
+ 	FAIL_(crypt_activate_by_volume_key(cd, CDEVICE_2, key, key_size, 0), "Device is active");
+ 	EQ_(crypt_status(cd, CDEVICE_2), CRYPT_INACTIVE);
+ 	OK_(crypt_deactivate(cd, CDEVICE_1));
+-	FAIL_(crypt_header_is_detached(cd), "no header for mismatched device");
++	EQ_(crypt_header_is_detached(cd), 1);
+ 	CRYPT_FREE(cd);
+ 
+ 	params.data_device = NULL;
+-- 
+2.38.1
+

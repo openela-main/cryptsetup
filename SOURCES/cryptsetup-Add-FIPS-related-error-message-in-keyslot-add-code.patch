@@ -1,0 +1,47 @@
+From 293abb5435e2b4bec7f8333fb11c88d5c1f45800 Mon Sep 17 00:00:00 2001
+From: Ondrej Kozina <okozina@redhat.com>
+Date: Mon, 5 Dec 2022 13:35:24 +0100
+Subject: [PATCH 3/3] Add FIPS related error message in keyslot add code.
+
+Add hints on what went wrong when creating new LUKS
+keyslots. The hint is printed only in FIPS mode and
+when pbkdf2 failed with passphrase shorter than 8
+bytes.
+---
+ lib/luks1/keymanage.c           | 5 ++++-
+ lib/luks2/luks2_keyslot_luks2.c | 2 ++
+ 2 files changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/lib/luks1/keymanage.c b/lib/luks1/keymanage.c
+index de97b73c..225e84b8 100644
+--- a/lib/luks1/keymanage.c
++++ b/lib/luks1/keymanage.c
+@@ -924,8 +924,11 @@ int LUKS_set_key(unsigned int keyIndex,
+ 			hdr->keyblock[keyIndex].passwordSalt, LUKS_SALTSIZE,
+ 			derived_key->key, hdr->keyBytes,
+ 			hdr->keyblock[keyIndex].passwordIterations, 0, 0);
+-	if (r < 0)
++	if (r < 0) {
++		if (crypt_fips_mode() && passwordLen < 8)
++			log_err(ctx, _("Invalid passphrase for PBKDF2 in FIPS mode."));
+ 		goto out;
++	}
+ 
+ 	/*
+ 	 * AF splitting, the volume key stored in vk->key is split to AfKey
+diff --git a/lib/luks2/luks2_keyslot_luks2.c b/lib/luks2/luks2_keyslot_luks2.c
+index 78f74242..f480bcab 100644
+--- a/lib/luks2/luks2_keyslot_luks2.c
++++ b/lib/luks2/luks2_keyslot_luks2.c
+@@ -265,6 +265,8 @@ static int luks2_keyslot_set_key(struct crypt_device *cd,
+ 	free(salt);
+ 	if (r < 0) {
+ 		crypt_free_volume_key(derived_key);
++		if (crypt_fips_mode() && passwordLen < 8 && !strcmp(pbkdf.type, "pbkdf2"))
++			log_err(cd, _("Invalid passphrase for PBKDF2 in FIPS mode."));
+ 		return r;
+ 	}
+ 
+-- 
+2.38.1
+
