@@ -1,0 +1,103 @@
+diff -rupN cryptsetup-2.3.7.old/man/cryptsetup.8 cryptsetup-2.3.7/man/cryptsetup.8
+--- cryptsetup-2.3.7.old/man/cryptsetup.8	2022-02-24 15:58:37.968167423 +0100
++++ cryptsetup-2.3.7/man/cryptsetup.8	2022-02-24 17:06:25.326217548 +0100
+@@ -321,7 +321,7 @@ the command prompts for it interactively
+ \-\-keyfile\-size, \-\-readonly, \-\-test\-passphrase,
+ \-\-allow\-discards, \-\-header, \-\-key-slot, \-\-master\-key\-file, \-\-token\-id,
+ \-\-token\-only, \-\-disable\-keyring, \-\-disable\-locks, \-\-type, \-\-refresh,
+-\-\-serialize\-memory\-hard\-pbkdf].
++\-\-serialize\-memory\-hard\-pbkdf, \-\-unbound].
+ .PP
+ \fIluksSuspend\fR <name>
+ .IP
+@@ -1409,10 +1409,14 @@ aligned to page size and page-cache init
+ integrity tag.
+ .TP
+ .B "\-\-unbound"
+-
+ Creates new or dumps existing LUKS2 unbound keyslot. See \fIluksAddKey\fR or
+ \fIluksDump\fR actions for more details.
+ 
++When used in \fIluksOpen\fR action (allowed only together with
++\-\-test\-passphrase parameter), it allows to test passphrase for unbound LUKS2
++keyslot. Otherwise, unbound keyslot passphrase can be tested only when specific
++keyslot is selected via \-\-key\-slot parameter.
++
+ .TP
+ .B "\-\-tcrypt\-hidden"
+ .B "\-\-tcrypt\-system"
+diff -rupN cryptsetup-2.3.7.old/src/cryptsetup.c cryptsetup-2.3.7/src/cryptsetup.c
+--- cryptsetup-2.3.7.old/src/cryptsetup.c	2022-02-24 15:58:37.969167429 +0100
++++ cryptsetup-2.3.7/src/cryptsetup.c	2022-02-24 17:10:30.947561638 +0100
+@@ -230,7 +230,7 @@ static void _set_activation_flags(uint32
+ 		*flags |= CRYPT_ACTIVATE_IGNORE_PERSISTENT;
+ 
+ 	/* Only for LUKS2 but ignored elsewhere */
+-	if (opt_test_passphrase)
++	if (opt_test_passphrase && (opt_unbound || (opt_key_slot != CRYPT_ANY_SLOT)))
+ 		*flags |= CRYPT_ACTIVATE_ALLOW_UNBOUND_KEY;
+ 
+ 	if (opt_serialize_memory_hard_pbkdf)
+@@ -4021,6 +4021,17 @@ int main(int argc, const char **argv)
+ 		_("Option --tcrypt-hidden, --tcrypt-system or --tcrypt-backup is supported only for TCRYPT device."),
+ 		poptGetInvocationName(popt_context));
+ 
++	if (opt_unbound && !strcmp(aname, "open") && device_type &&
++	    strncmp(device_type, "luks", 4))
++		usage(popt_context, EXIT_FAILURE,
++		_("Option --unbound is allowed only for open of luks device."),
++		poptGetInvocationName(popt_context));
++
++	if (opt_unbound && !opt_test_passphrase && !strcmp(aname, "open"))
++		usage(popt_context, EXIT_FAILURE,
++		_("Option --unbound cannot be used without --test-passphrase."),
++		poptGetInvocationName(popt_context));
++
+ 	if (opt_tcrypt_hidden && opt_allow_discards)
+ 		usage(popt_context, EXIT_FAILURE,
+ 		_("Option --tcrypt-hidden cannot be combined with --allow-discards."),
+@@ -4103,9 +4114,9 @@ int main(int argc, const char **argv)
+ 		      _("Keyslot specification is required."),
+ 		      poptGetInvocationName(popt_context));
+ 
+-	if (opt_unbound && strcmp(aname, "luksAddKey") && strcmp(aname, "luksDump"))
++	if (opt_unbound && strcmp(aname, "luksAddKey") && strcmp(aname, "luksDump") && strcmp(aname, "open"))
+ 		usage(popt_context, EXIT_FAILURE,
+-		      _("Option --unbound may be used only with luksAddKey and luksDump actions."),
++		      _("Option --unbound may be used only with luksAddKey, luksDump and open actions."),
+ 		      poptGetInvocationName(popt_context));
+ 
+ 	if (opt_refresh && strcmp(aname, "open"))
+diff -rupN cryptsetup-2.3.7.old/tests/compat-test2 cryptsetup-2.3.7/tests/compat-test2
+--- cryptsetup-2.3.7.old/tests/compat-test2	2022-02-24 15:58:38.013167680 +0100
++++ cryptsetup-2.3.7/tests/compat-test2	2022-02-24 17:23:23.035760517 +0100
+@@ -696,7 +696,7 @@ $CRYPTSETUP luksOpen -S 5 -d $KEY1 $LOOP
+ # otoh it should be allowed to test for proper passphrase
+ prepare "" new
+ echo $PWD1 | $CRYPTSETUP open -S1 --test-passphrase $HEADER_KEYU || fail
+-echo $PWD1 | $CRYPTSETUP open --test-passphrase $HEADER_KEYU || fail
++echo $PWD1 | $CRYPTSETUP open --unbound --test-passphrase $HEADER_KEYU || fail
+ echo $PWD1 | $CRYPTSETUP open -S1 $HEADER_KEYU $DEV_NAME 2>/dev/null && fail
+ [ -b /dev/mapper/$DEV_NAME ] && fail
+ echo $PWD1 | $CRYPTSETUP open $HEADER_KEYU $DEV_NAME 2>/dev/null && fail
+@@ -705,7 +705,7 @@ echo $PWD0 | $CRYPTSETUP open -S1 --test
+ $CRYPTSETUP luksKillSlot -q $HEADER_KEYU 0
+ $CRYPTSETUP luksDump $HEADER_KEYU | grep -q "0: luks2" && fail
+ echo $PWD1 | $CRYPTSETUP open -S1 --test-passphrase $HEADER_KEYU || fail
+-echo $PWD1 | $CRYPTSETUP open --test-passphrase $HEADER_KEYU || fail
++echo $PWD1 | $CRYPTSETUP open --unbound --test-passphrase $HEADER_KEYU || fail
+ echo $PWD1 | $CRYPTSETUP open -S1 $HEADER_KEYU $DEV_NAME 2>/dev/null && fail
+ 
+ prepare "[28] Detached LUKS header" wipe
+@@ -952,11 +952,9 @@ echo $PWD3 | $CRYPTSETUP -q luksAddKey -
+ # do not allow to replace keyslot by unbound slot
+ echo $PWD1 | $CRYPTSETUP -q luksAddKey -S5 --unbound -s 32 $LOOPDEV 2>/dev/null && fail
+ echo $PWD2 | $CRYPTSETUP -q open $LOOPDEV $DEV_NAME 2> /dev/null && fail
+-echo $PWD2 | $CRYPTSETUP -q open $LOOPDEV --test-passphrase || fail
+ echo $PWD2 | $CRYPTSETUP -q open -S2 $LOOPDEV $DEV_NAME 2> /dev/null && fail
+ echo $PWD2 | $CRYPTSETUP -q open -S2 $LOOPDEV --test-passphrase || fail
+ echo $PWD1 | $CRYPTSETUP -q open $LOOPDEV $DEV_NAME 2> /dev/null && fail
+-echo $PWD1 | $CRYPTSETUP -q open $LOOPDEV --test-passphrase || fail
+ # check we're able to change passphrase for unbound keyslot
+ echo -e "$PWD2\n$PWD3" | $CRYPTSETUP luksChangeKey $FAST_PBKDF_OPT -S 2 $LOOPDEV || fail
+ echo $PWD3 | $CRYPTSETUP open --test-passphrase $FAST_PBKDF_OPT -S 2 $LOOPDEV || fail

@@ -1,0 +1,12 @@
+diff -rupN cryptsetup-2.3.7.old/src/cryptsetup.c cryptsetup-2.3.7/src/cryptsetup.c
+--- cryptsetup-2.3.7.old/src/cryptsetup.c	2022-01-20 14:47:13.198475734 +0100
++++ cryptsetup-2.3.7/src/cryptsetup.c	2022-01-20 14:47:24.186505625 +0100
+@@ -1137,7 +1137,7 @@ static int reencrypt_metadata_repair(str
+ 		       _("Operation aborted.\n")))
+ 		return -EINVAL;
+ 
+-	r = tools_get_key(_("Enter passphrase to protect and uppgrade reencryption metadata: "),
++	r = tools_get_key(_("Enter passphrase to protect and upgrade reencryption metadata: "),
+ 			  &password, &passwordLen, opt_keyfile_offset,
+ 			  opt_keyfile_size, opt_key_file, opt_timeout,
+ 			  _verify_passphrase(0), 0, cd);

@@ -1,0 +1,206 @@
+From 6bc1378ddb5bbcc6ba592177c996576b0b3505f9 Mon Sep 17 00:00:00 2001
+From: Ondrej Kozina <okozina@redhat.com>
+Date: Fri, 22 Oct 2021 13:06:48 +0200
+Subject: [PATCH] Remove LUKS2 encryption data size restriction.
+
+LUKS2 encryption with data shift required remaining
+data size (size remaining after substracting --reduce-data-size value)
+to be at least --reduce-data-size. This was wrong. Remaining
+data size restriction should be correctly at least single sector
+(whatever sector size is selected or auto-detected).
+---
+ lib/luks2/luks2_reencrypt.c   | 31 ++++++++++++-----------
+ tests/api-test-2.c            |  6 ++---
+ tests/luks2-reencryption-test | 46 +++++++++++++++++++++++++++++------
+ 3 files changed, 57 insertions(+), 26 deletions(-)
+
+diff --git a/lib/luks2/luks2_reencrypt.c b/lib/luks2/luks2_reencrypt.c
+index b45327ad..d0e0dc40 100644
+--- a/lib/luks2/luks2_reencrypt.c
++++ b/lib/luks2/luks2_reencrypt.c
+@@ -825,7 +825,7 @@ static int reencrypt_offset_backward_moved(struct luks2_hdr *hdr, json_object *j
+ 			linear_length += LUKS2_segment_size(hdr, sg, 0);
+ 
+ 	/* all active linear segments length */
+-	if (linear_length) {
++	if (linear_length && segs > 1) {
+ 		if (linear_length < data_shift)
+ 			return -EINVAL;
+ 		tmp = linear_length - data_shift;
+@@ -1745,7 +1745,8 @@ static int reencrypt_set_encrypt_segments(struct crypt_device *cd, struct luks2_
+ 	int r;
+ 	uint64_t first_segment_offset, first_segment_length,
+ 		 second_segment_offset, second_segment_length,
+-		 data_offset = LUKS2_get_data_offset(hdr) << SECTOR_SHIFT;
++		 data_offset = LUKS2_get_data_offset(hdr) << SECTOR_SHIFT,
++		 data_size = dev_size - data_shift;
+ 	json_object *jobj_segment_first = NULL, *jobj_segment_second = NULL, *jobj_segments;
+ 
+ 	if (dev_size < data_shift)
+@@ -1760,9 +1761,14 @@ static int reencrypt_set_encrypt_segments(struct crypt_device *cd, struct luks2_
+ 		 * [future LUKS2 header (data shift size)][second data segment][gap (data shift size)][first data segment (data shift size)]
+ 		 */
+ 		first_segment_offset = dev_size;
+-		first_segment_length = data_shift;
+-		second_segment_offset = data_shift;
+-		second_segment_length = dev_size - 2 * data_shift;
++		if (data_size < data_shift) {
++			first_segment_length = data_size;
++			second_segment_length = second_segment_offset = 0;
++		} else {
++			first_segment_length = data_shift;
++			second_segment_offset = data_shift;
++			second_segment_length = data_size - data_shift;
++		}
+ 	} else if (data_shift) {
+ 		first_segment_offset = data_offset;
+ 		first_segment_length = dev_size;
+@@ -2163,17 +2169,10 @@ static int reencrypt_move_data(struct crypt_device *cd, int devfd, uint64_t data
+ 
+ 	log_dbg(cd, "Going to move data from head of data device.");
+ 
+-	buffer_len = data_shift;
+-	if (!buffer_len)
+-		return -EINVAL;
+-
+ 	offset = json_segment_get_offset(LUKS2_get_segment_jobj(hdr, 0), 0);
+-
+-	/* this is nonsense anyway */
+-	if (buffer_len != json_segment_get_size(LUKS2_get_segment_jobj(hdr, 0), 0)) {
+-		log_dbg(cd, "buffer_len %" PRIu64", segment size %" PRIu64, buffer_len, json_segment_get_size(LUKS2_get_segment_jobj(hdr, 0), 0));
++	buffer_len = json_segment_get_size(LUKS2_get_segment_jobj(hdr, 0), 0);
++	if (!buffer_len || buffer_len > data_shift)
+ 		return -EINVAL;
+-	}
+ 
+ 	if (posix_memalign(&buffer, device_alignment(crypt_data_device(cd)), buffer_len))
+ 		return -ENOMEM;
+@@ -2447,7 +2446,7 @@ static int reencrypt_init(struct crypt_device *cd,
+ 	 * encryption initialization (or mount)
+ 	 */
+ 	if (move_first_segment) {
+-		if (dev_size < 2 * (params->data_shift << SECTOR_SHIFT)) {
++		if (dev_size < (params->data_shift << SECTOR_SHIFT)) {
+ 			log_err(cd, _("Device %s is too small."), device_path(crypt_data_device(cd)));
+ 			return -EINVAL;
+ 		}
+@@ -3484,7 +3483,7 @@ int LUKS2_reencrypt_check_device_size(struct crypt_device *cd, struct luks2_hdr
+ 		    check_size, check_size >> SECTOR_SHIFT, real_size, real_size >> SECTOR_SHIFT,
+ 		    real_size - data_offset, (real_size - data_offset) >> SECTOR_SHIFT);
+ 
+-	if (real_size < data_offset || (check_size && (real_size - data_offset) < check_size)) {
++	if (real_size < data_offset || (check_size && real_size < check_size)) {
+ 		log_err(cd, _("Device %s is too small."), device_path(crypt_data_device(cd)));
+ 		return -EINVAL;
+ 	}
+diff --git a/tests/api-test-2.c b/tests/api-test-2.c
+index a01a7a72..05ee8f94 100644
+--- a/tests/api-test-2.c
++++ b/tests/api-test-2.c
+@@ -4238,7 +4238,7 @@ static void Luks2Reencryption(void)
+ 
+ 	_cleanup_dmdevices();
+ 	OK_(create_dmdevice_over_loop(H_DEVICE, r_header_size));
+-	OK_(create_dmdevice_over_loop(L_DEVICE_OK, 12*1024*2+1));
++	OK_(create_dmdevice_over_loop(L_DEVICE_OK, 8*1024*2+1));
+ 
+ 	/* encryption with datashift and moved segment (data shift + 1 sector) */
+ 	OK_(crypt_init(&cd, DMDIR H_DEVICE));
+@@ -4258,11 +4258,11 @@ static void Luks2Reencryption(void)
+ 
+ 	_cleanup_dmdevices();
+ 	OK_(create_dmdevice_over_loop(H_DEVICE, r_header_size));
+-	OK_(create_dmdevice_over_loop(L_DEVICE_OK, 12*1024*2));
++	OK_(create_dmdevice_over_loop(L_DEVICE_OK, 2*8200));
+ 
+ 	OK_(crypt_init(&cd, DMDIR H_DEVICE));
+ 
+-	/* encryption with datashift and moved segment (data shift + data offset > device size) */
++	/* encryption with datashift and moved segment (data shift + data offset <= device size) */
+ 	memset(&rparams, 0, sizeof(rparams));
+ 	params2.sector_size = 512;
+ 	params2.data_device = DMDIR L_DEVICE_OK;
+diff --git a/tests/luks2-reencryption-test b/tests/luks2-reencryption-test
+index 8efb2707..bf711c15 100755
+--- a/tests/luks2-reencryption-test
++++ b/tests/luks2-reencryption-test
+@@ -152,14 +152,30 @@ function open_crypt() # $1 pwd, $2 hdr
+ 	fi
+ }
+ 
++function wipe_dev_head() # $1 dev, $2 length (in MiBs)
++{
++	dd if=/dev/zero of=$1 bs=1M count=$2 conv=notrunc >/dev/null 2>&1
++}
++
+ function wipe_dev() # $1 dev
+ {
+ 	if [ -b $1 ] ; then
+ 		blkdiscard --zeroout $1 2>/dev/null || dd if=/dev/zero of=$1 bs=1M conv=notrunc >/dev/null 2>&1
++		if [ $# -gt 2 ]; then
++			dd if=/dev/urandom of=$1 bs=1M seek=$2 conv=notrunc >/dev/null 2>&1
++		fi
+ 	else
+ 		local size=$(stat --printf="%s" $1)
+ 		truncate -s 0 $1
+-		truncate -s $size $1
++		if [ $# -gt 2 ]; then
++			local diff=$((size-$2*1024*1024))
++			echo "size: $size, diff: $diff"
++			truncate -s $diff $1
++			# wipe_dev_head $1 $((diff/(1024*1024)))
++			dd if=/dev/urandom of=$1 bs=1M seek=$2 size=$((diff/(1024*1024))) conv=notrunc >/dev/null 2>&1
++		else
++			truncate -s $size $1
++		fi
+ 	fi
+ }
+ 
+@@ -214,15 +230,16 @@ function check_hash() # $1 pwd, $2 hash, $3 hdr
+ 	$CRYPTSETUP remove $DEV_NAME || fail
+ }
+ 
++function check_hash_dev_head() # $1 dev, $2 len, $3 hash
++{
++	local hash=$(dd if=$1 bs=512 count=$2 2>/dev/null | sha256sum | cut -d' ' -f1)
++	[ $hash != "$3" ] && fail "HASH differs (expected: $3) (result $hash)"
++}
++
+ function check_hash_head() # $1 pwd, $2 len, $3 hash, $4 hdr
+ {
+ 	open_crypt $1 $4
+-	if [ -n "$4" ]; then
+-		echo $1 | $CRYPTSETUP resize $DEV_NAME --size $2 --header $4 || fail
+-	else
+-		echo $1 | $CRYPTSETUP resize $DEV_NAME --size $2 || fail
+-	fi
+-	check_hash_dev /dev/mapper/$DEV_NAME $3
++	check_hash_dev_head /dev/mapper/$DEV_NAME $2 $3
+ 	$CRYPTSETUP remove $DEV_NAME || fail
+ }
+ 
+@@ -865,6 +882,21 @@ $CRYPTSETUP status $DEV_NAME >/dev/null 2>&1 || fail
+ $CRYPTSETUP close $DEV_NAME
+ echo $PWD1 | $CRYPTSETUP open $DEV --test-passphrase || fail
+ 
++# Small device encryption test
++preparebig 65
++# wipe only 1st MiB (final data size after encryption)
++wipe_dev $DEV 1
++check_hash_dev_head $DEV 2048 $HASH2
++echo $PWD1 | $CRYPTSETUP reencrypt $DEV --encrypt --reduce-device-size 64M -q $FAST_PBKDF_ARGON || fail
++check_hash_head $PWD1 2048 $HASH2
++
++wipe_dev_head $DEV 1
++check_hash_dev_head $DEV 2048 $HASH2
++echo $PWD1 | $CRYPTSETUP reencrypt $DEV --encrypt --reduce-device-size 64M --init-only -q $FAST_PBKDF_ARGON $DEV_NAME >/dev/null || fail
++check_hash_dev_head /dev/mapper/$DEV_NAME 2048 $HASH2
++echo $PWD1 | $CRYPTSETUP reencrypt $DEV -q || fail
++check_hash_dev_head /dev/mapper/$DEV_NAME 2048 $HASH2
++
+ echo "[3] Encryption with detached header"
+ preparebig 256
+ wipe_dev $DEV
+-- 
+2.38.1
+
