@@ -1,0 +1,52 @@
+From 53aa5f6c4f7439db1b25846597fb5603870ba55e Mon Sep 17 00:00:00 2001
+From: Milan Broz <gmazyland@gmail.com>
+Date: Mon, 5 Jun 2023 16:02:06 +0200
+Subject: [PATCH] Fix init_by_name to allow unknown cipher format in dm-crypt
+ as null context.
+
+Deactivation code should deactivate dm-crypt device even if it is unknown
+for libcryptsetup. Previous fix for cipher specification was too strict.
+
+Let's allow initialization as null context, that allow status and
+deactivate to be usable again.
+---
+ lib/setup.c     | 6 ++++++
+ tests/mode-test | 5 ++---
+ 2 files changed, 8 insertions(+), 3 deletions(-)
+
+diff --git a/lib/setup.c b/lib/setup.c
+index fd17be8c..786aa900 100644
+--- a/lib/setup.c
++++ b/lib/setup.c
+@@ -1276,6 +1276,12 @@ static int _init_by_name_crypt(struct crypt_device *cd, const char *name)
+ 	r = crypt_parse_name_and_mode(tgt->type == DM_LINEAR ? "null" : tgt->u.crypt.cipher, cipher,
+ 				      &key_nums, cipher_mode);
+ 	if (r < 0) {
++		/* Allow crypt null context with unknown cipher string */
++		if (tgt->type == DM_CRYPT && !tgt->u.crypt.integrity) {
++			crypt_set_null_type(cd);
++			r = 0;
++			goto out;
++		}
+ 		log_err(cd, _("No known cipher specification pattern detected for active device %s."), name);
+ 		goto out;
+ 	}
+diff --git a/tests/mode-test b/tests/mode-test
+index 4775751e..7f7f20a1 100755
+--- a/tests/mode-test
++++ b/tests/mode-test
+@@ -190,9 +190,8 @@ echo $PASSWORD | $CRYPTSETUP create -h sha256 -c 'capi:xts(aes)-plain64' -s 256
+ $CRYPTSETUP close "$DEV_NAME"_tstdev || fail
+ echo $PASSWORD | $CRYPTSETUP create -h sha256 -c 'capi:xts(ecb(aes-generic))-plain64' -s 256 "$DEV_NAME"_tstdev /dev/mapper/$DEV_NAME 2>/dev/null && fail
+ dmsetup create "$DEV_NAME"_tstdev --table "0 8 crypt capi:xts(ecb(aes-generic))-plain64 $KEY 0 /dev/mapper/$DEV_NAME 0" || fail
+-$CRYPTSETUP status "$DEV_NAME"_tstdev >/dev/null 2>&1 && fail
+-$CRYPTSETUP close "$DEV_NAME"_tstdev 2>/dev/null && fail
+-dmsetup remove "$DEV_NAME"_tstdev || fail
++$CRYPTSETUP status "$DEV_NAME"_tstdev 2>/dev/null | grep "type:" | grep -q "n/a" || fail
++$CRYPTSETUP close "$DEV_NAME"_tstdev 2>/dev/null || fail
+ echo [OK]
+ 
+ cleanup
+-- 
+2.40.1
+

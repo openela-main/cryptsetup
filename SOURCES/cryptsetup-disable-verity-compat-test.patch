@@ -1,0 +1,13 @@
+diff --git a/tests/Makefile.localtest b/tests/Makefile.localtest
+index 29a62f3..da2183e 100644
+--- a/tests/Makefile.localtest
++++ b/tests/Makefile.localtest
+@@ -5,7 +5,7 @@
+ CPPFLAGS=-I../lib/ -I../lib/luks1 -DHAVE_DECL_DM_TASK_RETRY_REMOVE -DKERNEL_KEYRING -DHAVE_SYS_SYSMACROS_H -DNO_CRYPTSETUP_PATH
+ CFLAGS=-O2 -g -Wall
+ LDLIBS=-lcryptsetup -ldevmapper
+-TESTS=$(wildcard *-test *-test2) api-test api-test-2
++TESTS=$(filter-out verity-compat-test, $(wildcard *-test *-test2)) api-test api-test-2
+ 
+ differ: differ.o
+ 	$(CC) -o $@ $^

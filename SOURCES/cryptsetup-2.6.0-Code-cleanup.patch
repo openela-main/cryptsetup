@@ -1,0 +1,28 @@
+From 23903951505cd4ad9f3469e037278494c14a7791 Mon Sep 17 00:00:00 2001
+From: Ondrej Kozina <okozina@redhat.com>
+Date: Wed, 12 Oct 2022 12:05:00 +0200
+Subject: [PATCH 3/5] Code cleanup.
+
+Type cast is not needed here.
+---
+ lib/libdevmapper.c | 4 +---
+ 1 file changed, 1 insertion(+), 3 deletions(-)
+
+diff --git a/lib/libdevmapper.c b/lib/libdevmapper.c
+index 7fcf843f..6a239e14 100644
+--- a/lib/libdevmapper.c
++++ b/lib/libdevmapper.c
+@@ -1992,9 +1992,7 @@ static int _dm_target_query_crypt(struct crypt_device *cd, uint32_t get_flags,
+ 
+ 	/* cipher */
+ 	if (get_flags & DM_ACTIVE_CRYPT_CIPHER) {
+-		r = crypt_capi_to_cipher(CONST_CAST(char**)&cipher,
+-				CONST_CAST(char**)&integrity,
+-				rcipher, rintegrity);
++		r = crypt_capi_to_cipher(&cipher, &integrity, rcipher, rintegrity);
+ 		if (r < 0)
+ 			goto err;
+ 	}
+-- 
+2.38.1
+

@@ -1,0 +1,34 @@
+From 19c15a652f878458493f0ac335110e2779f3cbe3 Mon Sep 17 00:00:00 2001
+From: Ondrej Kozina <okozina@redhat.com>
+Date: Wed, 12 Oct 2022 11:59:09 +0200
+Subject: [PATCH 4/5] Copy also integrity string in legacy mode.
+
+So that it handles integrity string same as it does
+with cipher string.
+---
+ lib/utils_crypt.c | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/lib/utils_crypt.c b/lib/utils_crypt.c
+index 4f4dbba8..93f846d7 100644
+--- a/lib/utils_crypt.c
++++ b/lib/utils_crypt.c
+@@ -284,7 +284,14 @@ int crypt_capi_to_cipher(char **org_c, char **org_i, const char *c_dm, const cha
+ 	if (strncmp(c_dm, "capi:", 4)) {
+ 		if (!(*org_c = strdup(c_dm)))
+ 			return -ENOMEM;
+-		*org_i = NULL;
++		if (i_dm) {
++			if (!(*org_i = strdup(i_dm))) {
++				free(*org_c);
++				*org_c = NULL;
++				return -ENOMEM;
++			}
++		} else
++			*org_i = NULL;
+ 		return 0;
+ 	}
+ 
+-- 
+2.38.1
+

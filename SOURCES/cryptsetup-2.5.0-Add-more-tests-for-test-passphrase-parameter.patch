@@ -1,0 +1,41 @@
+From f671febe64d8f40cdcb1677a08436a8907ccbb7e Mon Sep 17 00:00:00 2001
+From: Ondrej Kozina <okozina@redhat.com>
+Date: Wed, 23 Feb 2022 12:27:57 +0100
+Subject: [PATCH 2/3] Add more tests for --test-passphrase parameter.
+
+---
+ tests/compat-test-args        |  4 ++++
+ tests/luks2-reencryption-test | 18 ++++++++++++++++++
+ 2 files changed, 22 insertions(+)
+
+diff --git a/tests/luks2-reencryption-test b/tests/luks2-reencryption-test
+index 6f156016..73818b5d 100755
+--- a/tests/luks2-reencryption-test
++++ b/tests/luks2-reencryption-test
+@@ -1606,5 +1606,23 @@ if [ -n "$DM_SECTOR_SIZE" ]; then
+ 	reencrypt_recover_online 4096 journal $HASH1
+ fi
+ 
++echo "[27] Verify test passphrase mode works with reencryption metadata"
++echo $PWD1 | $CRYPTSETUP -S5 -q luksFormat --type luks2 $FAST_PBKDF_ARGON $DEV || fail
++echo -e "$PWD1\n$PWD1" | $CRYPTSETUP luksAddKey --unbound -s80 -S0 $FAST_PBKDF_ARGON $DEV || fail
++echo $PWD1 | $CRYPTSETUP reencrypt --init-only $DEV || fail
++echo $PWD1 | $CRYPTSETUP open --test-passphrase $DEV || fail
++
++echo $PWD1 | $CRYPTSETUP -q luksFormat -S5 --header $IMG_HDR --type luks2 $FAST_PBKDF_ARGON $DEV || fail
++echo -e "$PWD1\n$PWD1" | $CRYPTSETUP luksAddKey --unbound -s80 -S0 $FAST_PBKDF_ARGON $IMG_HDR || fail
++echo $PWD1 | $CRYPTSETUP reencrypt --decrypt --init-only --header $IMG_HDR $DEV || fail
++echo $PWD1 | $CRYPTSETUP open --test-passphrase $IMG_HDR || fail
++
++echo $PWD1 | $CRYPTSETUP reencrypt -q --encrypt --init-only --header $IMG_HDR $FAST_PBKDF_ARGON $DEV || fail
++echo $PWD1 | $CRYPTSETUP open --test-passphrase $IMG_HDR || fail
++
++wipe_dev $DEV
++echo $PWD1 | $CRYPTSETUP reencrypt --encrypt --init-only --reduce-device-size 8M $FAST_PBKDF_ARGON $DEV || fail
++echo $PWD1 | $CRYPTSETUP open --test-passphrase $DEV || fail
++
+ remove_mapping
+ exit 0
+-- 
+2.27.0
+
