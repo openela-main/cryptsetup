@@ -5,7 +5,7 @@ Obsoletes: cryptsetup-python3
 Summary: A utility for setting up encrypted disks
 Name: cryptsetup
 Version: 2.3.7
-Release: 5%{?dist}
+Release: 7%{?dist}
 License: GPLv2+ and LGPLv2+
 Group: Applications/System
 URL: https://gitlab.com/cryptsetup/cryptsetup
@@ -19,6 +19,9 @@ Requires: libpwquality >= 1.2.0
 
 %global upstream_version %{version}
 Source0: https://www.kernel.org/pub/linux/utils/cryptsetup/v2.0/cryptsetup-%{upstream_version}.tar.xz
+# binary archive with updated tests/conversion_imgs.tar.xz and tests/luks2_header_requirements.tar.xz
+# for testing (can not be patched via rpmbuild)
+Source1: tests.tar.xz
 # Following patch has to applied last
 Patch0:  %{name}-add-system-library-paths.patch
 # Remove the patch when (if ever) osci infrastructure gets stable enough
@@ -34,7 +37,13 @@ Patch9: %{name}-2.6.0-Move-cipher_dm2c-to-crypto-utilities.patch
 Patch10: %{name}-2.6.0-Code-cleanup.patch
 Patch11: %{name}-2.6.0-Copy-also-integrity-string-in-legacy-mode.patch
 Patch12: %{name}-2.6.0-Fix-internal-crypt-segment-compare-routine.patch
-Patch13: %{name}-2.6.1-Abort-encryption-when-header-and-data-devices-are-sa.patch
+Patch13: %{name}-2.6.0-Delegate-FIPS-mode-detection-to-configured-crypto-ba.patch
+Patch14: %{name}-2.6.1-Abort-encryption-when-header-and-data-devices-are-sa.patch
+Patch15: %{name}-2.7.0-Disallow-use-of-internal-kenrel-crypto-driver-names-.patch
+Patch16: %{name}-2.7.0-Also-disallow-active-devices-with-internal-kernel-na.patch
+Patch17: %{name}-2.7.0-Fix-init_by_name-to-allow-unknown-cipher-format-in-d.patch
+Patch18: %{name}-2.7.0-Fix-reencryption-to-fail-properly-for-unknown-cipher.patch
+Patch19: %{name}-2.7.0-Fix-activation-of-LUKS2-with-capi-format-cipher-and-.patch
 
 %description
 The cryptsetup package contains a utility for setting up
@@ -89,7 +98,7 @@ This package contains cryptsetup-reencrypt utility which
 can be used for offline reencryption of disk in situ.
 
 %prep
-%setup -q -n cryptsetup-%{upstream_version}
+%setup -q -n cryptsetup-%{upstream_version} -a 1
 %patch1 -p1
 %patch2 -p1
 %patch3 -p1
@@ -103,6 +112,12 @@ can be used for offline reencryption of disk in situ.
 %patch11 -p1
 %patch12 -p1
 %patch13 -p1
+%patch14 -p1
+%patch15 -p1
+%patch16 -p1
+%patch17 -p1
+%patch18 -p1
+%patch19 -p1
 %patch0 -p1
 chmod -x misc/dracut_90reencrypt/*
 
@@ -162,6 +177,19 @@ rm -rf %{buildroot}/%{_libdir}/*.la
 %clean
 
 %changelog
+* Tue Jul 11 2023 Ondrej Kozina <okozina@redhat.com> - 2.3.7-7
+- Rebuild due to missing CI environment
+- Resolves: #2212772 #2193342
+
+* Thu Jun 28 2023 Daniel Zatovic <dzatovic@redhat.com> - 2.3.7-6
+- patch: Delegate FIPS mode detection to configured crypto backend
+- patch: Disallow use of internal kenrel crypto driver names in "capi"
+- patch: Also disallow active devices with internal kernel names
+- patch: Fix init_by_name to allow unknown cipher format in dm-crypt
+- patch: Fix reencryption to fail properly for unknown cipher
+- patch: Fix activation of LUKS2 with capi format cipher and kernel
+- Resolves: #2212772 #2193342
+
 * Tue Jan 10 2023 Daniel Zatovic <dzatovic@redhat.com> - 2.3.7-5
 - change cryptsetup-devel dependency from cryptsetup to cryptsetup-libs
 - Resolves: #2150254

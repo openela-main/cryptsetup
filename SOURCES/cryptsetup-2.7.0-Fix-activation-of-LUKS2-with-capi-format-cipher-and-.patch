@@ -1,0 +1,103 @@
+From b8711faf92868dc82b1a64e7673740444199b2ca Mon Sep 17 00:00:00 2001
+From: Milan Broz <gmazyland@gmail.com>
+Date: Sun, 25 Jun 2023 23:32:13 +0200
+Subject: [PATCH 2/2] Fix activation of LUKS2 with capi format cipher and
+ kernel crypt name.
+
+While activation of internal cipher algorithms (like aes-generic)
+is disallowed, some old LUKS2 images can still use it.
+
+Check the cipher in activate call, but allow to load LUKS2 metadata.
+This can allow to add repair code easily and also allow luksDump.
+
+Also fix segfault in reencrypt code for such a header.
+
+Fixes: #820
+---
+ lib/luks2/luks2_json_metadata.c   |   5 +++++
+ tests/Makefile.am                 |   4 +++-
+ tests/compat-test2                |  17 ++++++++++++++++-
+ tests/luks2_invalid_cipher.img.xz | Bin 0 -> 135372 bytes
+ tests/meson.build                 |   1 +
+ 5 files changed, 25 insertions(+), 2 deletions(-)
+ create mode 100644 tests/luks2_invalid_cipher.img.xz
+
+Index: cryptsetup-2.3.7/lib/luks2/luks2_json_metadata.c
+===================================================================
+--- cryptsetup-2.3.7.orig/lib/luks2/luks2_json_metadata.c
++++ cryptsetup-2.3.7/lib/luks2/luks2_json_metadata.c
+@@ -2324,6 +2324,11 @@ int LUKS2_activate(struct crypt_device *
+ 	if ((r = LUKS2_unmet_requirements(cd, hdr, 0, 0)))
+ 		return r;
+ 
++	/* Check that cipher is in compatible format */
++	if (!crypt_get_cipher(cd)) {
++		log_err(cd, _("No known cipher specification pattern detected in LUKS2 header."));
++		return -EINVAL;
++	}
+ 	r = dm_crypt_target_set(&dmd.segment, 0, dmd.size, crypt_data_device(cd),
+ 			vk, crypt_get_cipher_spec(cd), crypt_get_iv_offset(cd),
+ 			crypt_get_data_offset(cd), crypt_get_integrity(cd) ?: "none",
+Index: cryptsetup-2.3.7/tests/compat-test2
+===================================================================
+--- cryptsetup-2.3.7.orig/tests/compat-test2
++++ cryptsetup-2.3.7/tests/compat-test2
+@@ -3,6 +3,7 @@
+ PS4='$LINENO:'
+ [ -z "$CRYPTSETUP_PATH" ] && CRYPTSETUP_PATH=".."
+ CRYPTSETUP=$CRYPTSETUP_PATH/cryptsetup
++CRYPTSETUP_REENCRYPT=$CRYPTSETUP_PATH/cryptsetup-reencrypt
+ 
+ CRYPTSETUP_VALGRIND=../.libs/cryptsetup
+ CRYPTSETUP_LIB_VALGRIND=../.libs
+@@ -16,6 +17,7 @@ IMG10=luks-test-v10
+ HEADER_IMG=luks-header
+ HEADER_KEYU=luks2_keyslot_unassigned.img
+ HEADER_LUKS2_PV=blkid-luks2-pv.img
++HEADER_LUKS2_INV=luks2_invalid_cipher.img
+ KEY1=key1
+ KEY2=key2
+ KEY5=key5
+@@ -50,7 +52,9 @@ function remove_mapping()
+ 	[ -b /dev/mapper/$DEV_NAME2 ] && dmsetup remove --retry $DEV_NAME2
+ 	[ -b /dev/mapper/$DEV_NAME ] && dmsetup remove --retry $DEV_NAME
+ 	losetup -d $LOOPDEV >/dev/null 2>&1
+-	rm -f $ORIG_IMG $IMG $IMG10 $KEY1 $KEY2 $KEY5 $KEYE $HEADER_IMG $HEADER_KEYU $VK_FILE $HEADER_LUKS2_PV missing-file $TOKEN_FILE0 $TOKEN_FILE1 test_image_* $KEY_FILE0 $KEY_FILE1 >/dev/null 2>&1
++	rm -f $ORIG_IMG $IMG $IMG10 $KEY1 $KEY2 $KEY5 $KEYE $HEADER_IMG $HEADER_KEYU $VK_FILE \
++	$HEADER_LUKS2_PV $HEADER_LUKS2_INV missing-file $TOKEN_FILE0 $TOKEN_FILE1 test_image_* \
++	$KEY_FILE0 $KEY_FILE1 >/dev/null 2>&1
+ 
+ 	# unlink whole test keyring
+ 	[ -n "$TEST_KEYRING" ] && keyctl unlink $TEST_KEYRING "@u" >/dev/null
+@@ -1049,5 +1053,19 @@ for cipher in $CIPHERS ; do
+ done
+ echo
+ 
++prepare "[44] LUKS2 invalid cipher (kernel cipher driver name)" wipe
++xz -dk $HEADER_LUKS2_INV.xz
++dd if=$HEADER_LUKS2_INV of=$IMG conv=notrunc >/dev/null 2>&1
++$CRYPTSETUP -q luksDump $LOOPDEV | grep -q "capi:xts(ecb(aes-generic))-plain64" || fail
++echo $PWD1 | $CRYPTSETUP open $LOOPDEV --test-passphrase || fail
++echo $PWD1 | $CRYPTSETUP open $LOOPDEV $DEV_NAME 2>&1 | grep -q "No known cipher specification pattern" || fail
++echo $PWD1 | $CRYPTSETUP reencrypt $LOOPDEV >/dev/null 2>&1 && fail
++echo $PWD1 | $CRYPTSETUP reencrypt $LOOPDEV 2>&1 | grep -q "No known cipher specification pattern" || fail
++echo $PWD1 | $CRYPTSETUP_REENCRYPT $LOOPDEV 2>&1 | grep -q "No known cipher specification pattern" || fail
++dmsetup create $DEV_NAME --uuid CRYPT-LUKS2-3d20686f551748cb89911ad32379821b-test --table \
++  "0 8 crypt capi:xts(ecb(aes-generic))-plain64 edaa40709797973715e572bf7d86fcbb9cfe2051083c33c28d58fe4e1e7ff642 0 $LOOPDEV 32768"
++$CRYPTSETUP status $DEV_NAME | grep -q "n/a" || fail
++$CRYPTSETUP close $DEV_NAME ||fail
++
+ remove_mapping
+ exit 0
+Index: cryptsetup-2.3.7/src/cryptsetup.h
+===================================================================
+--- cryptsetup-2.3.7.orig/src/cryptsetup.h
++++ cryptsetup-2.3.7/src/cryptsetup.h
+@@ -103,6 +103,7 @@ void tools_clear_line(void);
+ int tools_wipe_progress(uint64_t size, uint64_t offset, void *usrptr);
+ int tools_reencrypt_progress(uint64_t size, uint64_t offset, void *usrptr);
+ int reencrypt_is_header_detached(const char *header_device, const char *data_device);
++bool luks2_reencrypt_eligible(struct crypt_device *cd);
+ 
+ int tools_read_mk(const char *file, char **key, int keysize);
+ int tools_write_mk(const char *file, const char *key, int keysize);

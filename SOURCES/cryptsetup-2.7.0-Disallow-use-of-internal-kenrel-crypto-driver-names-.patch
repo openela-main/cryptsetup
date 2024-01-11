@@ -1,0 +1,68 @@
+From 438cf1d1b3ef6d7405cfbcbe5f631d3d7467a605 Mon Sep 17 00:00:00 2001
+From: Milan Broz <gmazyland@gmail.com>
+Date: Mon, 24 Apr 2023 21:19:03 +0200
+Subject: [PATCH] Disallow use of internal kenrel crypto driver names in "capi"
+ specification.
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+The common way to specify cipher mode in cryptsetup
+is to use cipher-mode-iv notation (like aes-xts-plain64).
+With introduction of authenticated ciphers we also allow "capi:<spec>"
+notation that is directly used by dm-crypt (e.g. capi:xts(aes)-plain64).
+
+CAPI specification was never intended to be used with internal
+kernel crypto api names (with dash in algorithm name), actually the
+whole parsing routine wrongly parses mode here now.
+
+The code not checks if parsing wrongly separated the full cipher
+string and effectively allowing only proper cipher names
+(example of no longer supported string is capi:xts(ecb(aes-generic))-plain64).
+
+Thanks to Jan Wichelmann, Luca Wilke and Thomas Eisenbarth from
+University of Lübeck for noticing the problems with this code.
+
+Fixes: #809
+---
+ lib/utils_crypt.c | 8 +++++++-
+ tests/mode-test   | 6 ++++++
+ 2 files changed, 13 insertions(+), 1 deletion(-)
+
+diff --git a/lib/utils_crypt.c b/lib/utils_crypt.c
+index 0b7dc378..c1bde000 100644
+--- a/lib/utils_crypt.c
++++ b/lib/utils_crypt.c
+@@ -43,7 +43,13 @@ int crypt_parse_name_and_mode(const char *s, char *cipher, int *key_nums,
+ 		   cipher, cipher_mode) == 2) {
+ 		if (!strcmp(cipher_mode, "plain"))
+ 			strcpy(cipher_mode, "cbc-plain");
+-		if (key_nums) {
++		if (!strncmp(cipher, "capi:", 5)) {
++			/* CAPI must not use internal cipher driver names with dash */
++			if (strchr(cipher_mode, ')'))
++				return -EINVAL;
++			if (key_nums)
++				*key_nums = 1;
++		} else if (key_nums) {
+ 			char *tmp = strchr(cipher, ':');
+ 			*key_nums = tmp ? atoi(++tmp) : 1;
+ 			if (!*key_nums)
+diff --git a/tests/mode-test b/tests/mode-test
+index 82171fbd..fe61880a 100755
+--- a/tests/mode-test
++++ b/tests/mode-test
+@@ -184,4 +184,10 @@ done
+ dmcrypt xchacha12,aes-adiantum-plain64
+ dmcrypt xchacha20,aes-adiantum-plain64
+ 
++echo -n "CAPI format:"
++echo $PASSWORD | $CRYPTSETUP create -h sha256 -c 'capi:xts(aes)-plain64' -s 256 "$DEV_NAME"_tstdev /dev/mapper/$DEV_NAME || fail
++$CRYPTSETUP close "$DEV_NAME"_tstdev || fail
++echo $PASSWORD | $CRYPTSETUP create -h sha256 -c 'capi:xts(ecb(aes-generic))-plain64' -s 256 "$DEV_NAME"_tstdev /dev/mapper/$DEV_NAME 2>/dev/null && fail
++echo [OK]
++
+ cleanup
+-- 
+2.40.1
+
