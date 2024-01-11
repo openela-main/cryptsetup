@@ -1,0 +1,31 @@
+From 1f01eea60e38ac92aa05e4b95372d54b7b9095df Mon Sep 17 00:00:00 2001
+From: Milan Broz <gmazyland@gmail.com>
+Date: Mon, 26 Jun 2023 13:25:59 +0200
+Subject: [PATCH] Fix reencryption to fail properly for unknown cipher.
+
+crypt_get_cipher and crypt_get_cipher mode can return NULL,
+check it in advance.
+---
+ src/utils_reencrypt.c | 6 ++++++
+ 1 file changed, 6 insertions(+)
+
+diff --git a/src/utils_reencrypt.c b/src/utils_reencrypt.c
+index a78557cb..8ffceb36 100644
+--- a/src/utils_reencrypt.c
++++ b/src/utils_reencrypt.c
+@@ -419,6 +419,12 @@ static bool luks2_reencrypt_eligible(struct crypt_device *cd)
+ 		return false;
+ 	}
+ 
++	/* Check that cipher is in compatible format */
++	if (!crypt_get_cipher(cd)) {
++		log_err(_("No known cipher specification pattern detected in LUKS2 header."));
++		return false;
++	}
++
+ 	return true;
+ }
+ 
+-- 
+2.41.0
+

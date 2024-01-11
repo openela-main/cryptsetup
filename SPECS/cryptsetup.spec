@@ -1,7 +1,7 @@
 Summary: Utility for setting up encrypted disks
 Name: cryptsetup
 Version: 2.6.0
-Release: 2%{?dist}
+Release: 3%{?dist}
 License: GPLv2+ and LGPLv2+
 URL: https://gitlab.com/cryptsetup/cryptsetup
 BuildRequires: openssl-devel, popt-devel, device-mapper-devel
@@ -26,6 +26,11 @@ Patch0000: %{name}-2.6.1-Run-PBKDF-benchmark-with-8-bytes-long-well-known-pas.pa
 Patch0001: %{name}-2.6.1-Change-tests-to-use-passphrases-with-minimal-8-chars.patch
 Patch0002: %{name}-2.6.1-Enable-crypt_header_is_detached-for-empty-contexts.patch
 Patch0003: %{name}-2.6.1-Abort-encryption-when-header-and-data-devices-are-sa.patch
+Patch0004: %{name}-2.7.0-Disallow-use-of-internal-kenrel-crypto-driver-names-.patch
+Patch0005: %{name}-2.7.0-Also-disallow-active-devices-with-internal-kernel-na.patch
+Patch0006: %{name}-2.7.0-Fix-init_by_name-to-allow-unknown-cipher-format-in-d.patch
+Patch0007: %{name}-2.7.0-Fix-reencryption-to-fail-properly-for-unknown-cipher.patch
+Patch0008: %{name}-2.7.0-Fix-activation-of-LUKS2-with-capi-format-cipher-and-.patch
 Patch9998: %{name}-Add-FIPS-related-error-message-in-keyslot-add-code.patch
 Patch9999: %{name}-add-system-library-paths.patch
 
@@ -111,6 +116,14 @@ rm -rf %{buildroot}%{_libdir}/*.la
 %ghost %attr(700, -, -) %dir /run/cryptsetup
 
 %changelog
+* Fri Jun 30 2023 Daniel Zatovic <dzatovic@redhat.com> - 2.6.0-3
+- patch: Disallow use of internal kenrel crypto driver names in "capi"
+- patch: Also disallow active devices with internal kernel names
+- patch: Fix init_by_name to allow unknown cipher format in dm-crypt
+- patch: Fix reencryption to fail properly for unknown cipher
+- patch: Fix activation of LUKS2 with capi format cipher and kernel
+- Resolves: #2212771
+
 * Wed Dec 14 2022 Daniel Zatovic <dzatovic@redhat.com> - 2.6.0-2
 - Fix FIPS related bugs.
 - Abort encryption when header and data devices are same.
