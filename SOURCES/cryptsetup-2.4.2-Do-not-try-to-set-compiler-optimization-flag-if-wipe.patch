@@ -1,0 +1,53 @@
+From a76310b53fbb117e620f2c37350b68dd267f1088 Mon Sep 17 00:00:00 2001
+From: Milan Broz <gmazyland@gmail.com>
+Date: Mon, 20 Sep 2021 17:42:20 +0200
+Subject: [PATCH] Do not try to set compiler optimization flag if wipe is
+ implemented in libc.
+
+If zeroing memory is implemented through libc call (like memset_bzero),
+compiler should never remove such call. It is not needed to set O0
+optimization flag explicitly.
+
+Various checkers like annocheck causes problems with these flags,
+just remove it where it makes no sense.
+
+(Moreover, we use the same pattern without compiler magic
+in crypt_backend_memzero() already.)
+---
+ lib/crypto_backend/argon2/core.c | 10 ++++++++--
+ 1 file changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/lib/crypto_backend/argon2/core.c b/lib/crypto_backend/argon2/core.c
+index b204ba98..db9a7741 100644
+--- a/lib/crypto_backend/argon2/core.c
++++ b/lib/crypto_backend/argon2/core.c
+@@ -120,18 +120,24 @@ void free_memory(const argon2_context *context, uint8_t *memory,
+     }
+ }
+ 
+-void NOT_OPTIMIZED secure_wipe_memory(void *v, size_t n) {
+ #if defined(_MSC_VER) && VC_GE_2005(_MSC_VER)
++void secure_wipe_memory(void *v, size_t n) {
+     SecureZeroMemory(v, n);
++}
+ #elif defined memset_s
++void secure_wipe_memory(void *v, size_t n) {
+     memset_s(v, n, 0, n);
++}
+ #elif defined(HAVE_EXPLICIT_BZERO)
++void secure_wipe_memory(void *v, size_t n) {
+     explicit_bzero(v, n);
++}
+ #else
++void NOT_OPTIMIZED secure_wipe_memory(void *v, size_t n) {
+     static void *(*const volatile memset_sec)(void *, int, size_t) = &memset;
+     memset_sec(v, 0, n);
+-#endif
+ }
++#endif
+ 
+ /* Memory clear flag defaults to true. */
+ int FLAG_clear_internal_memory = 1;
+-- 
+2.27.0
+
