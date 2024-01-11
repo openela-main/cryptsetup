@@ -1,0 +1,161 @@
+From c18dcfaa0b91eb48006232fbfadce9e6a9b4a790 Mon Sep 17 00:00:00 2001
+From: Ondrej Kozina <okozina@redhat.com>
+Date: Fri, 2 Dec 2022 15:39:36 +0100
+Subject: [PATCH 2/2] Abort encryption when header and data devices are same.
+
+If data device reduction is not requsted this led
+to data corruption since LUKS metadata was written
+over the data device.
+---
+ src/utils_reencrypt.c          | 42 ++++++++++++++++++++++++++++++----
+ tests/luks2-reencryption-test  | 16 +++++++++++++
+ tests/reencryption-compat-test | 20 +++++++++++++---
+ 3 files changed, 70 insertions(+), 8 deletions(-)
+
+diff --git a/src/utils_reencrypt.c b/src/utils_reencrypt.c
+index 87ead680..73e0bca8 100644
+--- a/src/utils_reencrypt.c
++++ b/src/utils_reencrypt.c
+@@ -467,6 +467,26 @@ static int reencrypt_check_active_device_sb_block_size(const char *active_device
+ 	return reencrypt_check_data_sb_block_size(dm_device, new_sector_size);
+ }
+ 
++static int reencrypt_is_header_detached(const char *header_device, const char *data_device)
++{
++	int r;
++	struct stat st;
++	struct crypt_device *cd;
++
++	if (!header_device)
++		return 0;
++
++	if (header_device && stat(header_device, &st) < 0 && errno == ENOENT)
++		return 1;
++
++	if ((r = crypt_init_data_device(&cd, header_device, data_device)))
++		return r;
++
++	r = crypt_header_is_detached(cd);
++	crypt_free(cd);
++	return r;
++}
++
+ static int encrypt_luks2_init(struct crypt_device **cd, const char *data_device, const char *device_name)
+ {
+ 	int keyslot, r, fd;
+@@ -490,9 +510,14 @@ static int encrypt_luks2_init(struct crypt_device **cd, const char *data_device,
+ 
+ 	_set_reencryption_flags(&params.flags);
+ 
+-	if (!data_shift && !ARG_SET(OPT_HEADER_ID)) {
+-		log_err(_("Encryption without detached header (--header) is not possible without data device size reduction (--reduce-device-size)."));
+-		return -ENOTSUP;
++	if (!data_shift) {
++		r = reencrypt_is_header_detached(ARG_STR(OPT_HEADER_ID), data_device);
++		if (r < 0)
++			return r;
++		if (!r) {
++			log_err(_("Encryption without detached header (--header) is not possible without data device size reduction (--reduce-device-size)."));
++			return -ENOTSUP;
++		}
+ 	}
+ 
+ 	if (!ARG_SET(OPT_HEADER_ID) && ARG_UINT64(OPT_OFFSET_ID) &&
+@@ -1358,9 +1383,16 @@ static int _encrypt(struct crypt_device *cd, const char *type, enum device_statu
+ 	if (!type)
+ 		type = crypt_get_default_type();
+ 
+-	if (dev_st == DEVICE_LUKS1_UNUSABLE || isLUKS1(type))
++	if (dev_st == DEVICE_LUKS1_UNUSABLE || isLUKS1(type)) {
++		r = reencrypt_is_header_detached(ARG_STR(OPT_HEADER_ID), action_argv[0]);
++		if (r < 0)
++			return r;
++		if (!r && !ARG_SET(OPT_REDUCE_DEVICE_SIZE_ID)) {
++			log_err(_("Encryption without detached header (--header) is not possible without data device size reduction (--reduce-device-size)."));
++			return -ENOTSUP;
++		}
+ 		return reencrypt_luks1(action_argv[0]);
+-	else if (dev_st == DEVICE_NOT_LUKS) {
++	} else if (dev_st == DEVICE_NOT_LUKS) {
+ 		r = encrypt_luks2_init(&encrypt_cd, action_argv[0], action_argc > 1 ? action_argv[1] : NULL);
+ 		if (r < 0 || ARG_SET(OPT_INIT_ONLY_ID)) {
+ 			crypt_free(encrypt_cd);
+diff --git a/tests/luks2-reencryption-test b/tests/luks2-reencryption-test
+index bab54353..a647a8c2 100755
+--- a/tests/luks2-reencryption-test
++++ b/tests/luks2-reencryption-test
+@@ -1080,6 +1080,22 @@ $CRYPTSETUP status $DEV_NAME >/dev/null 2>&1 || fail
+ $CRYPTSETUP close $DEV_NAME
+ echo $PWD1 | $CRYPTSETUP open --header $IMG_HDR $DEV --test-passphrase || fail
+ 
++# Encrypt without size reduction must not allow header device same as data device
++wipe_dev_head $DEV 1
++echo $PWD1 | $CRYPTSETUP reencrypt $DEV --type luks2 --encrypt --header $DEV -q $FAST_PBKDF_ARGON 2>/dev/null && fail
++$CRYPTSETUP isLUKS $DEV 2>/dev/null && fail
++ln -s $DEV $DEV_LINK || fail
++echo $PWD1 | $CRYPTSETUP reencrypt $DEV --type luks2 --encrypt --header $DEV_LINK -q $FAST_PBKDF_ARGON 2>/dev/null && fail
++$CRYPTSETUP isLUKS $DEV 2>/dev/null && fail
++rm -f $DEV_LINK || fail
++
++dd if=/dev/zero of=$IMG bs=4k count=1 >/dev/null 2>&1
++echo $PWD1 | $CRYPTSETUP reencrypt $IMG --type luks2 --encrypt --header $IMG -q $FAST_PBKDF_ARGON 2>/dev/null && fail
++$CRYPTSETUP isLUKS $IMG 2>/dev/null && fail
++ln -s $IMG $DEV_LINK || fail
++echo $PWD1 | $CRYPTSETUP reencrypt $IMG --type luks2 --encrypt --header $DEV_LINK -q $FAST_PBKDF_ARGON 2>/dev/null && fail
++$CRYPTSETUP isLUKS $IMG 2>/dev/null && fail
++
+ echo "[4] Reencryption with detached header"
+ wipe $PWD1 $IMG_HDR
+ echo $PWD1 | $CRYPTSETUP reencrypt -c aes-cbc-essiv:sha256 -s 128 --header $IMG_HDR -q $FAST_PBKDF_ARGON $DEV || fail
+diff --git a/tests/reencryption-compat-test b/tests/reencryption-compat-test
+index f6a84137..453831d1 100755
+--- a/tests/reencryption-compat-test
++++ b/tests/reencryption-compat-test
+@@ -15,6 +15,7 @@ IMG=reenc-data
+ IMG_HDR=$IMG.hdr
+ HEADER_LUKS2_PV=blkid-luks2-pv.img
+ ORIG_IMG=reenc-data-orig
++DEV_LINK="reenc-test-link"
+ KEY1=key1
+ PWD1="93R4P4pIqAH8"
+ PWD2="1cND4319812f"
+@@ -40,7 +41,7 @@ function remove_mapping()
+ 	[ -b /dev/mapper/$DEV_NAME2 ] && dmsetup remove --retry $DEV_NAME2
+ 	[ -b /dev/mapper/$DEV_NAME ] && dmsetup remove --retry $DEV_NAME
+ 	[ ! -z "$LOOPDEV1" ] && losetup -d $LOOPDEV1 >/dev/null 2>&1
+-	rm -f $IMG $IMG_HDR $ORIG_IMG $KEY1 $HEADER_LUKS2_PV >/dev/null 2>&1
++	rm -f $IMG $IMG_HDR $ORIG_IMG $KEY1 $HEADER_LUKS2_PV $DEV_LINK >/dev/null 2>&1
+ 	umount $MNT_DIR > /dev/null 2>&1
+ 	rmdir $MNT_DIR > /dev/null 2>&1
+ 	LOOPDEV1=""
+@@ -302,12 +303,25 @@ check_slot 0 || fail "Only keyslot 0 expected to be enabled"
+ $REENC $LOOPDEV1 -d $KEY1 $FAST_PBKDF -q || fail
+ # FIXME echo $PWD1 | $REENC ...
+ 
+-if [ ! fips_mode ]; then
+ echo "[4] Encryption of not yet encrypted device"
++# Encrypt without size reduction must not allow header device same as data device
++wipe_dev $LOOPDEV1
++echo $PWD1 | $REENC $LOOPDEV1 --type luks1 --new --header $LOOPDEV1 -q $FAST_PBKDF_ARGON 2>/dev/null && fail
++$CRYPTSETUP isLUKS $LOOPDEV1 2>/dev/null && fail
++ln -s $LOOPDEV1 $DEV_LINK || fail
++echo $PWD1 | $REENC $LOOPDEV1 --type luks1 --new --header $DEV_LINK -q $FAST_PBKDF_ARGON 2>/dev/null && fail
++$CRYPTSETUP isLUKS $LOOPDEV1 2>/dev/null && fail
++rm -f $DEV_LINK || fail
++echo $PWD1 | $REENC $IMG --type luks1 --new --header $IMG -q $FAST_PBKDF_ARGON 2>/dev/null && fail
++$CRYPTSETUP isLUKS $IMG 2>/dev/null && fail
++ln -s $IMG $DEV_LINK || fail
++echo $PWD1 | $REENC $IMG --type luks1 --new --header $DEV_LINK -q $FAST_PBKDF_ARGON 2>/dev/null && fail
++$CRYPTSETUP isLUKS $IMG 2>/dev/null && fail
++
++if [ ! fips_mode ]; then
+ # well, movin' zeroes :-)
+ OFFSET=2048
+ SIZE=$(blockdev --getsz $LOOPDEV1)
+-wipe_dev $LOOPDEV1
+ dmsetup create $DEV_NAME2 --table "0 $(($SIZE - $OFFSET)) linear $LOOPDEV1 0" || fail
+ check_hash_dev /dev/mapper/$DEV_NAME2 $HASH3
+ dmsetup remove --retry $DEV_NAME2 || fail
+-- 
+2.38.1
+
