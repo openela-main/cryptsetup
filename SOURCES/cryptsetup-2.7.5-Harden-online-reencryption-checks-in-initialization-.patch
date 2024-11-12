@@ -1,0 +1,35 @@
+From 9991cbc306963c8f03eb6dad82fa6c12f75d3b97 Mon Sep 17 00:00:00 2001
+From: Ondrej Kozina <okozina@redhat.com>
+Date: Mon, 26 Aug 2024 10:44:50 +0200
+Subject: [PATCH 07/10] Harden online reencryption checks in initialization
+ phase.
+
+Verify the data device supports O_DIRECT io flag in
+the initialization phase. Online reencryption is not
+safe unless we can read and write the data in direct
+mode.
+---
+ lib/luks2/luks2_reencrypt.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/lib/luks2/luks2_reencrypt.c b/lib/luks2/luks2_reencrypt.c
+index c77de3f6..6519c1e3 100644
+--- a/lib/luks2/luks2_reencrypt.c
++++ b/lib/luks2/luks2_reencrypt.c
+@@ -3788,6 +3788,13 @@ static int reencrypt_init_by_passphrase(struct crypt_device *cd,
+ 	if (flags & CRYPT_REENCRYPT_RECOVERY)
+ 		return reencrypt_recovery_by_passphrase(cd, hdr, keyslot_old, keyslot_new, passphrase, passphrase_size);
+ 
++	if (name && !device_direct_io(crypt_data_device(cd))) {
++		log_dbg(cd, "Device %s does not support direct I/O.", device_path(crypt_data_device(cd)));
++		/* FIXME: Add more specific error mesage for translation later. */
++		log_err(cd, _("Failed to initialize reencryption device stack."));
++		return -EINVAL;
++	}
++
+ 	if (cipher && !crypt_cipher_wrapped_key(cipher, cipher_mode)) {
+ 		r = crypt_keyslot_get_key_size(cd, keyslot_new);
+ 		if (r < 0)
+-- 
+2.46.0
+

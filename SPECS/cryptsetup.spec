@@ -1,6 +1,6 @@
 Summary: Utility for setting up encrypted disks
 Name: cryptsetup
-Version: 2.6.0
+Version: 2.7.2
 Release: 3%{?dist}
 License: GPLv2+ and LGPLv2+
 URL: https://gitlab.com/cryptsetup/cryptsetup
@@ -15,23 +15,17 @@ Obsoletes: %{name}-reencrypt <= %{version}
 Provides: %{name}-reencrypt = %{version}
 
 %global upstream_version %{version}
-Source0: https://www.kernel.org/pub/linux/utils/cryptsetup/v2.6/cryptsetup-%{upstream_version}.tar.xz
+Source0: https://www.kernel.org/pub/linux/utils/cryptsetup/v2.7/cryptsetup-%{upstream_version}.tar.xz
 
-# binary archive with updated tests/conversion_imgs.tar.xz and tests/luks2_header_requirements.tar.xz
-# for testing (can not be patched via rpmbuild)
-Source1: tests.tar.xz
-
+Patch0001: %{name}-Add-FIPS-related-error-message-in-keyslot-add-code.patch
+Patch0002: %{name}-2.7.5-Do-not-handle-device-as-suspended-on-error.patch
+Patch0003: %{name}-2.7.5-Return-suspended-status-also-for-unknow-target-types.patch
+Patch0004: %{name}-2.7.5-Fix-detection-of-direct-io-with-suspended-devices.patch
+Patch0005: %{name}-2.7.5-Harden-online-reencryption-checks-in-initialization-.patch
+Patch0006: %{name}-2.7.5-Abort-online-reencryption-for-misconfigured-devices.patch
+Patch0007: %{name}-Enable-to-use-Argon2-in-FIPS-with-openssl-backend.patch
+Patch0008: %{name}-Warn-if-Argon2-keyslot-is-unlocked-in-FIPS-mode.patch
 # Following patch has to applied last
-Patch0000: %{name}-2.6.1-Run-PBKDF-benchmark-with-8-bytes-long-well-known-pas.patch
-Patch0001: %{name}-2.6.1-Change-tests-to-use-passphrases-with-minimal-8-chars.patch
-Patch0002: %{name}-2.6.1-Enable-crypt_header_is_detached-for-empty-contexts.patch
-Patch0003: %{name}-2.6.1-Abort-encryption-when-header-and-data-devices-are-sa.patch
-Patch0004: %{name}-2.7.0-Disallow-use-of-internal-kenrel-crypto-driver-names-.patch
-Patch0005: %{name}-2.7.0-Also-disallow-active-devices-with-internal-kernel-na.patch
-Patch0006: %{name}-2.7.0-Fix-init_by_name-to-allow-unknown-cipher-format-in-d.patch
-Patch0007: %{name}-2.7.0-Fix-reencryption-to-fail-properly-for-unknown-cipher.patch
-Patch0008: %{name}-2.7.0-Fix-activation-of-LUKS2-with-capi-format-cipher-and-.patch
-Patch9998: %{name}-Add-FIPS-related-error-message-in-keyslot-add-code.patch
 Patch9999: %{name}-add-system-library-paths.patch
 
 %description
@@ -70,11 +64,11 @@ The integritysetup package contains a utility for setting up
 disk integrity protection using dm-integrity kernel module.
 
 %prep
-%autosetup -n cryptsetup-%{upstream_version} -p 1 -a 1
+%autosetup -n cryptsetup-%{upstream_version} -p 1
 
 %build
 rm -f man/*.8
-%configure --enable-fips --enable-pwquality --enable-internal-sse-argon2 --disable-ssh-token --enable-asciidoc
+%configure --enable-fips --enable-pwquality --enable-internal-sse-argon2 --disable-ssh-token --enable-asciidoc --disable-hw-opal --with-plain-hash=ripemd160 --with-plain-cipher=aes --with-plain-mode=cbc-essiv:sha256
 %make_build
 
 %install
@@ -116,6 +110,25 @@ rm -rf %{buildroot}%{_libdir}/*.la
 %ghost %attr(700, -, -) %dir /run/cryptsetup
 
 %changelog
+* Mon Sep 02 2024 Ondrej Kozina <okozina@redhat.com> - 2.7.2-3
+- Specbump for correct target release.
+- Resolves: RHEL-39003 RHEL-41238
+
+* Thu Aug 29 2024 Ondrej Kozina <okozina@redhat.com> - 2.7.2-2
+- patch: Warn if Argon2 keyslot is unlocked in FIPS mode.
+- patch: Enable Argon2 in FIPS with openssl backend.
+- patch: Abort online reencryption for misconfigured devices.
+- patch: Harden online reencryption checks in initialization phase.
+- patch: Fix detection of direct-io with suspended devices.
+- patch: Return suspended status also for unknow target types.
+- patch: Do not handle device as suspended on error.
+- Resolves: RHEL-39003 RHEL-41238
+
+* Thu May 02 2024 Daniel Zatovic <dzatovic@redhat.com> - 2.7.2-1
+- Update to cryptsetup 2.7.2
+- Use OpenSLL Argon implementation instead of the built-in one
+- Resolves: RHEL-32377
+
 * Fri Jun 30 2023 Daniel Zatovic <dzatovic@redhat.com> - 2.6.0-3
 - patch: Disallow use of internal kenrel crypto driver names in "capi"
 - patch: Also disallow active devices with internal kernel names
