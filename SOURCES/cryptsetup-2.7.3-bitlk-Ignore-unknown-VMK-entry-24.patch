@@ -1,0 +1,43 @@
+From ef653d00a72b8257819f5ae5d3de9bc9f5039b3c Mon Sep 17 00:00:00 2001
+From: Milan Broz <gmazyland@gmail.com>
+Date: Tue, 21 May 2024 10:54:55 +0200
+Subject: [PATCH] bitlk: Ignore unknown VMK entry 24
+
+This VMK value looks like a password hint (masked email?)
+we can safely ignore it.
+
+Fixes: #886
+---
+ lib/bitlk/bitlk.c | 3 +++
+ lib/bitlk/bitlk.h | 1 +
+ 2 files changed, 4 insertions(+)
+
+diff --git a/lib/bitlk/bitlk.c b/lib/bitlk/bitlk.c
+index ae533e5a..230e7101 100644
+--- a/lib/bitlk/bitlk.c
++++ b/lib/bitlk/bitlk.c
+@@ -324,6 +324,9 @@ static int parse_vmk_entry(struct crypt_device *cd, uint8_t *data, int start, in
+ 		/* unknown timestamps in recovery protected VMK */
+ 		} else if (key_entry_value == BITLK_ENTRY_VALUE_RECOVERY_TIME) {
+ 			;
++		/* optional hint (?) string (masked email?), we can safely ignore it */
++		} else if (key_entry_value == BITLK_ENTRY_VALUE_HINT) {
++			;
+ 		} else if (key_entry_value == BITLK_ENTRY_VALUE_STRING) {
+ 			if (key_entry_size < BITLK_ENTRY_HEADER_LEN)
+ 				return -EINVAL;
+diff --git a/lib/bitlk/bitlk.h b/lib/bitlk/bitlk.h
+index 7eb73211..af8f6298 100644
+--- a/lib/bitlk/bitlk.h
++++ b/lib/bitlk/bitlk.h
+@@ -78,6 +78,7 @@ typedef enum {
+ 	BITLK_ENTRY_VALUE_OFFSET_SIZE = 0x000f,
+ 	BITLK_ENTRY_VALUE_RECOVERY_TIME = 0x015,
+ 	BITLK_ENTRY_VALUE_GUID = 0x0017,
++	BITLK_ENTRY_VALUE_HINT = 0x0018,
+ } BITLKFVEEntryValue;
+ 
+ struct bitlk_vmk {
+-- 
+2.49.0
+

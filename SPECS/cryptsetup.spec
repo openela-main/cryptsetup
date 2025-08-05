@@ -1,7 +1,7 @@
 Summary: Utility for setting up encrypted disks
 Name: cryptsetup
 Version: 2.7.2
-Release: 3%{?dist}
+Release: 3%{?dist}.1
 License: GPLv2+ and LGPLv2+
 URL: https://gitlab.com/cryptsetup/cryptsetup
 BuildRequires: openssl-devel, popt-devel, device-mapper-devel
@@ -25,6 +25,7 @@ Patch0005: %{name}-2.7.5-Harden-online-reencryption-checks-in-initialization-.pa
 Patch0006: %{name}-2.7.5-Abort-online-reencryption-for-misconfigured-devices.patch
 Patch0007: %{name}-Enable-to-use-Argon2-in-FIPS-with-openssl-backend.patch
 Patch0008: %{name}-Warn-if-Argon2-keyslot-is-unlocked-in-FIPS-mode.patch
+Patch0009: %{name}-2.7.3-bitlk-Ignore-unknown-VMK-entry-24.patch
 # Following patch has to applied last
 Patch9999: %{name}-add-system-library-paths.patch
 
@@ -110,6 +111,10 @@ rm -rf %{buildroot}%{_libdir}/*.la
 %ghost %attr(700, -, -) %dir /run/cryptsetup
 
 %changelog
+* Fri Jun 13 2025 Ondrej Kozina <okozina@redhat.com> - 2.7.2-3.1
+- patch: Ignore unknown VMK entry 24 in bitlk metadata.
+- Resolves: RHEL-96283
+
 * Mon Sep 02 2024 Ondrej Kozina <okozina@redhat.com> - 2.7.2-3
 - Specbump for correct target release.
 - Resolves: RHEL-39003 RHEL-41238
