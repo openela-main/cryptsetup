@@ -1,0 +1,42 @@
+From cfd043f6f0527407c57fb5a2735ee8e22c070cd7 Mon Sep 17 00:00:00 2001
+From: Ondrej Kozina <okozina@redhat.com>
+Date: Wed, 28 Aug 2024 17:06:12 +0200
+Subject: [PATCH 09/10] Enable to use Argon2 in FIPS with openssl backend.
+
+This patch is required to read existing LUKS2
+keyslots created with Argon2 KDF before the system
+got switched in FIPS mode. Creating new keyslots using
+Argon2 was already blocked elsewhere and before this patch.
+---
+ lib/crypto_backend/crypto_openssl.c | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/lib/crypto_backend/crypto_openssl.c b/lib/crypto_backend/crypto_openssl.c
+index 9f1be9e0..07c133b0 100644
+--- a/lib/crypto_backend/crypto_openssl.c
++++ b/lib/crypto_backend/crypto_openssl.c
+@@ -611,13 +611,20 @@ static int openssl_argon2(const char *type, const char *password, size_t passwor
+ 		OSSL_PARAM_uint(OSSL_KDF_PARAM_THREADS, &threads),
+ 		OSSL_PARAM_uint32(OSSL_KDF_PARAM_ARGON2_LANES, &parallel),
+ 		OSSL_PARAM_uint32(OSSL_KDF_PARAM_ARGON2_MEMCOST, &memory),
++		/* to allow fetching blake2 in FIPS mode in later KDF_derive routine */
++		OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_PROPERTIES, "-fips", 0),
+ 		OSSL_PARAM_END
+ 	};
+ 
+ 	if (OSSL_get_max_threads(ossl_ctx) == 0)
+ 		threads = 1;
+ 
+-	argon2 = EVP_KDF_fetch(ossl_ctx, type, NULL);
++	/*
++	 * '-fips' skips fips provider for Argon2 variants implementations.
++	 * We need it to be able to read existing keyslots in FIPS mode.
++	 * Writing new Argon2 enabled keyslots in FIPS mode is blocked elsewhere.
++	 */
++	argon2 = EVP_KDF_fetch(ossl_ctx, type, "-fips");
+ 	if (!argon2)
+ 		return -EINVAL;
+ 
+-- 
+2.46.0
+

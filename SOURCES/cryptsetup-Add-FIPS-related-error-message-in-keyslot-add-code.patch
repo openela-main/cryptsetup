@@ -1,0 +1,40 @@
+From 293abb5435e2b4bec7f8333fb11c88d5c1f45800 Mon Sep 17 00:00:00 2001
+From: Ondrej Kozina <okozina@redhat.com>
+Date: Mon, 5 Dec 2022 13:35:24 +0100
+Subject: [PATCH 3/3] Add FIPS related error message in keyslot add code.
+
+Add hints on what went wrong when creating new LUKS
+keyslots. The hint is printed only in FIPS mode and
+when pbkdf2 failed with passphrase shorter than 8
+bytes.
+---
+ lib/luks1/keymanage.c           | 5 ++++-
+ lib/luks2/luks2_keyslot_luks2.c | 2 ++
+ 2 files changed, 6 insertions(+), 1 deletion(-)
+
+Index: cryptsetup-2.7.2/lib/luks1/keymanage.c
+===================================================================
+--- cryptsetup-2.7.2.orig/lib/luks1/keymanage.c
++++ cryptsetup-2.7.2/lib/luks1/keymanage.c
+@@ -926,6 +926,8 @@ int LUKS_set_key(unsigned int keyIndex,
+ 			derived_key->key, hdr->keyBytes,
+ 			hdr->keyblock[keyIndex].passwordIterations, 0, 0);
+ 	if (r < 0) {
++		if (crypt_fips_mode() && passwordLen < 8)
++			log_err(ctx, _("Invalid passphrase for PBKDF2 in FIPS mode."));
+ 		if ((crypt_backend_flags() & CRYPT_BACKEND_PBKDF2_INT) &&
+ 		     hdr->keyblock[keyIndex].passwordIterations > INT_MAX)
+ 			log_err(ctx, _("PBKDF2 iteration value overflow."));
+Index: cryptsetup-2.7.2/lib/luks2/luks2_keyslot_luks2.c
+===================================================================
+--- cryptsetup-2.7.2.orig/lib/luks2/luks2_keyslot_luks2.c
++++ cryptsetup-2.7.2/lib/luks2/luks2_keyslot_luks2.c
+@@ -269,6 +269,8 @@ static int luks2_keyslot_set_key(struct
+ 		     pbkdf.iterations > INT_MAX)
+ 			log_err(cd, _("PBKDF2 iteration value overflow."));
+ 		crypt_free_volume_key(derived_key);
++		if (crypt_fips_mode() && passwordLen < 8 && !strcmp(pbkdf.type, "pbkdf2"))
++			log_err(cd, _("Invalid passphrase for PBKDF2 in FIPS mode."));
+ 		return r;
+ 	}
+ 
