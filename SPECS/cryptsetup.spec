@@ -1,7 +1,7 @@
 Summary: Utility for setting up encrypted disks
 Name: cryptsetup
 Version: 2.7.2
-Release: 3%{?dist}.1
+Release: 4%{?dist}
 License: GPLv2+ and LGPLv2+
 URL: https://gitlab.com/cryptsetup/cryptsetup
 BuildRequires: openssl-devel, popt-devel, device-mapper-devel
@@ -111,9 +111,9 @@ rm -rf %{buildroot}%{_libdir}/*.la
 %ghost %attr(700, -, -) %dir /run/cryptsetup
 
 %changelog
-* Fri Jun 13 2025 Ondrej Kozina <okozina@redhat.com> - 2.7.2-3.1
+* Wed Jun 04 2025 Ondrej Kozina <okozina@redhat.com> - 2.7.2-4
 - patch: Ignore unknown VMK entry 24 in bitlk metadata.
-- Resolves: RHEL-96283
+- Resolves: RHEL-94860
 
 * Mon Sep 02 2024 Ondrej Kozina <okozina@redhat.com> - 2.7.2-3
 - Specbump for correct target release.
