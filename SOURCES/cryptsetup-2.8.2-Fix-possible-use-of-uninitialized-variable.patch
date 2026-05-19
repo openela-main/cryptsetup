@@ -1,0 +1,29 @@
+From a8e8e39007f9a3ab91267ff2b4f0aee45cc48752 Mon Sep 17 00:00:00 2001
+Message-ID: <a8e8e39007f9a3ab91267ff2b4f0aee45cc48752.1766065101.git.khanicov@redhat.com>
+From: Ondrej Kozina <okozina@redhat.com>
+Date: Thu, 30 Oct 2025 13:59:52 +0100
+Subject: [PATCH] Fix possible use of uninitialized variable.
+
+device_tag_size variable was not initialized and used
+when device_is_nop_dif returned negative error code.
+---
+ lib/setup.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/lib/setup.c b/lib/setup.c
+index 37e6f7d9..48b67ce6 100644
+--- a/lib/setup.c
++++ b/lib/setup.c
+@@ -3045,7 +3045,11 @@ int crypt_format_inline(struct crypt_device *cd,
+ 	    iparams->journal_integrity_key_size))
+ 		return -EINVAL;
+ 
+-	if (!device_is_nop_dif(idevice, &device_tag_size)) {
++	r = device_is_nop_dif(idevice, &device_tag_size);
++	if (r < 0)
++		return r;
++
++	if (!r) {
+ 		log_err(cd, _("Device %s does not provide inline integrity data fields."), mdata_device_path(cd));
+ 		return -EINVAL;
+ 	}

@@ -1,0 +1,143 @@
+From 7fa4cd930814073cb8abe997d8fac19a849daecd Mon Sep 17 00:00:00 2001
+Message-ID: <7fa4cd930814073cb8abe997d8fac19a849daecd.1767967753.git.khanicov@redhat.com>
+From: Milan Broz <gmazyland@gmail.com>
+Date: Fri, 2 Jan 2026 20:58:26 +0100
+Subject: [PATCH] Fix wrong device size status reports in cryptsetup and
+ integritysetup
+
+In version 2.8.0 the status output was modified to strictly use
+units and also bytes device size was added.
+
+Unfortunately, the size was wrongly calculated if sector size was
+different than 512-byte default.
+
+Fixes: #972
+---
+ src/cryptsetup.c            | 8 +++-----
+ src/integritysetup.c        | 6 ++----
+ src/veritysetup.c           | 2 +-
+ tests/compat-test2          | 2 ++
+ tests/integrity-compat-test | 6 ++++++
+ tests/verity-compat-test    | 4 ++++
+ 6 files changed, 18 insertions(+), 10 deletions(-)
+
+diff --git a/src/cryptsetup.c b/src/cryptsetup.c
+index d8b9e508..b9966f84 100644
+--- a/src/cryptsetup.c
++++ b/src/cryptsetup.c
+@@ -936,7 +936,6 @@ static int action_status(void)
+ 	char *backing_file;
+ 	const char *device;
+ 	int path = 0, r = 0, hw_enc;
+-	uint64_t sector_size;
+ 
+ 	/* perhaps a path, not a dm device name */
+ 	if (strchr(action_argv[0], '/'))
+@@ -1019,10 +1018,9 @@ static int action_status(void)
+ 			log_std("  loop:    %s\n", backing_file);
+ 			free(backing_file);
+ 		}
+-		sector_size = (uint64_t)crypt_get_sector_size(cd) ?: SECTOR_SIZE;
+-		log_std("  sector size:  %" PRIu64 " [bytes]\n", sector_size);
+-		log_std("  offset:  %" PRIu64 " [512-byte units] (%" PRIu64 " [bytes])\n", cad.offset, cad.offset * sector_size);
+-		log_std("  size:    %" PRIu64 " [512-byte units] (%" PRIu64 " [bytes])\n", cad.size, cad.size * sector_size);
++		log_std("  sector size:  %" PRIu64 " [bytes]\n", (uint64_t)crypt_get_sector_size(cd) ?: SECTOR_SIZE);
++		log_std("  offset:  %" PRIu64 " [512-byte units] (%" PRIu64 " [bytes])\n", cad.offset, cad.offset * SECTOR_SIZE);
++		log_std("  size:    %" PRIu64 " [512-byte units] (%" PRIu64 " [bytes])\n", cad.size, cad.size * SECTOR_SIZE);
+ 		if (cad.iv_offset)
+ 			log_std("  skipped: %" PRIu64 " [512-byte units]\n", cad.iv_offset);
+ 		log_std("  mode:    %s%s\n", cad.flags & CRYPT_ACTIVATE_READONLY ?
+diff --git a/src/integritysetup.c b/src/integritysetup.c
+index a1d77855..89c3edd3 100644
+--- a/src/integritysetup.c
++++ b/src/integritysetup.c
+@@ -424,7 +424,6 @@ static int action_status(void)
+ 	char *backing_file;
+ 	const char *device, *metadata_device;
+ 	int path = 0, r = 0;
+-	uint64_t sector_size;
+ 
+ 	/* perhaps a path, not a dm device name */
+ 	if (strchr(action_argv[0], '/'))
+@@ -482,10 +481,9 @@ static int action_status(void)
+ 				free(backing_file);
+ 			}
+ 		}
+-		sector_size = (uint64_t)crypt_get_sector_size(cd) ?: SECTOR_SIZE;
+-		log_std("  sector size:  %" PRIu64 " [bytes]\n", sector_size);
++		log_std("  sector size:  %" PRIu64 " [bytes]\n", (uint64_t)crypt_get_sector_size(cd) ?: SECTOR_SIZE);
+ 		log_std("  interleave sectors: %u\n", ip.interleave_sectors);
+-		log_std("  size:    %" PRIu64 " [512-byte units] (%" PRIu64 " [bytes])\n", cad.size, cad.size * sector_size);
++		log_std("  size:    %" PRIu64 " [512-byte units] (%" PRIu64 " [bytes])\n", cad.size, cad.size * SECTOR_SIZE);
+ 		log_std("  mode:    %s%s\n",
+ 			cad.flags & CRYPT_ACTIVATE_READONLY ? "readonly" : "read/write",
+ 			cad.flags & CRYPT_ACTIVATE_RECOVERY ? " recovery" : "");
+diff --git a/src/veritysetup.c b/src/veritysetup.c
+index 8e666e3f..d95db09b 100644
+--- a/src/veritysetup.c
++++ b/src/veritysetup.c
+@@ -395,7 +395,7 @@ static int action_status(void)
+ 			log_std("  data loop:   %s\n", backing_file);
+ 			free(backing_file);
+ 		}
+-		log_std("  size:        %" PRIu64 " [512-byte units] (%" PRIu64 " [bytes])\n", cad.size, cad.size * (uint64_t)SECTOR_SIZE);
++		log_std("  size:        %" PRIu64 " [512-byte units] (%" PRIu64 " [bytes])\n", cad.size, cad.size * SECTOR_SIZE);
+ 		log_std("  mode:        %s\n", cad.flags & CRYPT_ACTIVATE_READONLY ?
+ 					   "readonly" : "read/write");
+ 
+diff --git a/tests/compat-test2 b/tests/compat-test2
+index 373461eb..7350455b 100755
+--- a/tests/compat-test2
++++ b/tests/compat-test2
+@@ -816,9 +816,11 @@ if dm_crypt_sector_size_support; then
+ 	echo $PWD1 | $CRYPTSETUP luksOpen $LOOPDEV $DEV_NAME || fail
+ 	echo $PWD1 | $CRYPTSETUP -q resize --device-size 1M $DEV_NAME || fail
+ 	$CRYPTSETUP -q status  $DEV_NAME | grep "size:" | grep -q "2048 \[512-byte units\]" || fail
++	$CRYPTSETUP -q status  $DEV_NAME | grep "size:" | grep -q "1048576 \[bytes\]" || fail
+ 	echo $PWD1 | $CRYPTSETUP -q resize --device-size 2049s $DEV_NAME > /dev/null 2>&1 && fail
+ 	echo $PWD1 | $CRYPTSETUP -q resize --size 2049 $DEV_NAME > /dev/null 2>&1 && fail
+ 	$CRYPTSETUP -q status  $DEV_NAME | grep "size:" | grep -q "2048 \[512-byte units\]" || fail
++	$CRYPTSETUP -q status  $DEV_NAME | grep "size:" | grep -q "1048576 \[bytes\]" || fail
+ fi
+ $CRYPTSETUP close $DEV_NAME || fail
+ # Resize not aligned to logical block size
+diff --git a/tests/integrity-compat-test b/tests/integrity-compat-test
+index c40218cd..5aeea5c0 100755
+--- a/tests/integrity-compat-test
++++ b/tests/integrity-compat-test
+@@ -230,7 +230,13 @@ intformat() # alg alg_out tagsize outtagsize sector_size csum [keyfile keysize]
+ 	status_check "tag size" "$4 [bytes]"
+ 	status_check "integrity" $2
+ 	status_check "sector size" "$5 [bytes]"
++
++	SIZE_BYTES=$(blockdev --getsize64 /dev/mapper/$DEV_NAME)
++	SIZE_512S=$(( $SIZE_BYTES / 512 ))
++	status_check "  size" "$SIZE_512S [512-byte units] ($SIZE_BYTES [bytes])"
++
+ 	int_check_sum $1 $6 $7 $8
++
+ 	echo -n "[REMOVE]"
+ 	$INTSETUP close $DEV_NAME || fail "Cannot deactivate device."
+ 	echo "[OK]"
+diff --git a/tests/verity-compat-test b/tests/verity-compat-test
+index 93ac405e..02b3d390 100755
+--- a/tests/verity-compat-test
++++ b/tests/verity-compat-test
+@@ -188,6 +188,9 @@ check_root_hash() # $1 size, $2 hash, $3 salt, $4 version, $5 hash, [$6 offset]
+ 
+ 	$VERITYSETUP create $DEV_NAME $DEV_PARAMS $VERIFY_PARAMS $ROOT_HASH  >>$DEV_OUT 2>&1 || fail
+ 	check_exists
++	SIZE_BYTES=$(blockdev --getsize64 /dev/mapper/$DEV_NAME)
++	SIZE_512S=$(( $SIZE_BYTES / 512 ))
++	$VERITYSETUP status $DEV_NAME 2>/dev/null | grep " size:" | grep -q -F "$SIZE_512S [512-byte units] ($SIZE_BYTES [bytes])" || fail
+ 	echo -n "[activate]"
+ 
+ 	dd if=/dev/mapper/$DEV_NAME of=/dev/null bs=$1 2>/dev/null
+@@ -474,6 +477,7 @@ export LANG=C
+ [ -n "$VALG" ] && valgrind_setup && VERITYSETUP=valgrind_run
+ modprobe dm-verity >/dev/null 2>&1
+ dmsetup targets | grep verity >/dev/null 2>&1 || skip "Cannot find dm-verity target, test skipped."
++command -v blockdev >/dev/null || skip "Cannot find blockdev utility, test skipped."
+ 
+ # VERITYSETUP tests
+ 

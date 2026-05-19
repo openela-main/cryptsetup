@@ -1,0 +1,97 @@
+From 3a8feb8be78dabb7024aad2d1c48dcaa145e67dc Mon Sep 17 00:00:00 2001
+From: Ondrej Kozina <okozina@redhat.com>
+Date: Thu, 11 Sep 2025 11:30:25 +0200
+Subject: [PATCH] Improve check for a function attribute support.
+
+The compiler may advertise function attribute support
+with __has_attribute operator even though it does
+not implement the feature on some architecture.
+
+This fixes the issue with  GCC 11 on ppc64le with
+__attribute__((zero_call_used_regs("used"))).
+
+Fixes: #959.
+---
+ configure.ac                  | 21 +++++++++++++++++++++
+ lib/crypto_backend/memutils.c |  4 +---
+ meson.build                   | 15 +++++++++++++++
+ 3 files changed, 37 insertions(+), 3 deletions(-)
+
+diff --git a/configure.ac b/configure.ac
+index 6a6c4dff5..a7485b541 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -680,6 +680,27 @@ AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
+ ])
+ CFLAGS=$saved_CFLAGS
+ 
++dnl Force compiler to use zero_call_used_regs("used") to check for the function attribute support.
++dnl Otherwise the compiler may falsely advertise it with __has_attribute operator, even though
++dnl it does not implement it on some archs.
++AC_MSG_CHECKING([for zero_call_used_regs(user)])
++saved_CFLAGS=$CFLAGS
++CFLAGS="-O0 -Werror"
++AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
++	void _test_function(void);
++	__attribute__((zero_call_used_regs("used"))) void _test_function(void) {
++		volatile int *i; volatile int j = 0; if (j) *i = 0;
++	}
++]],
++[[ _test_function() ]]
++)],[
++	AC_DEFINE([HAVE_ATTRIBUTE_ZEROCALLUSEDREGS], 1, [Define to 1 to use __attribute__((zero_call_used_regs("used")))])
++	AC_MSG_RESULT([yes])
++], [
++	AC_MSG_RESULT([no])
++])
++CFLAGS=$saved_CFLAGS
++
+ AC_MSG_CHECKING([for systemd tmpfiles config directory])
+ if test "x$prefix" != "xNONE"; then
+ 	saved_PKG_CONFIG=$PKG_CONFIG
+diff --git a/lib/crypto_backend/memutils.c b/lib/crypto_backend/memutils.c
+index 4e440136d..a041b3e60 100644
+--- a/lib/crypto_backend/memutils.c
++++ b/lib/crypto_backend/memutils.c
+@@ -9,11 +9,9 @@
+ 
+ #define ATTR_NOINLINE __attribute__ ((noinline))
+ #define ATTR_ZERO_REGS
+-#if defined __has_attribute
+-#  if __has_attribute (zero_call_used_regs)
++#if HAVE_ATTRIBUTE_ZEROCALLUSEDREGS
+ #    undef ATTR_ZERO_REGS
+ #    define ATTR_ZERO_REGS __attribute__ ((zero_call_used_regs("used")))
+-#  endif
+ #endif
+ 
+ /* Workaround for https://github.com/google/sanitizers/issues/1507 */
+diff --git a/meson.build b/meson.build
+index 3c17ebca5..2fb6a2492 100644
+--- a/meson.build
++++ b/meson.build
+@@ -697,6 +697,21 @@ if cc.links(
+         description: 'Define to 1 to use __attribute__((symver))')
+ endif
+ 
++# ==========================================================================
++# Check compiler support for zero_called_used_regs("used") function attribute
++if cc.links(
++        '''void _test_fn(void);
++
++        __attribute__((zero_call_used_regs("used"))) void _test_fn(void) {
++		volatile int *i; volatile int j = 0; if (j) *i = 0;
++        }
++        int main(void) { _test_fn(); return 0; }''',
++        args: ['-O0', '-Werror' ],
++        name: 'for zero_call_used_regs("used") attribute support')
++    conf.set10('HAVE_ATTRIBUTE_ZEROCALLUSEDREGS', true,
++        description: 'Define to 1 to use __attribute__((zero_call_used_regs("used")))')
++endif
++
+ # ==========================================================================
+ 
+ if get_option('dev-random')
+-- 
+GitLab
+

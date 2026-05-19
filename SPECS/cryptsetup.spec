@@ -1,9 +1,10 @@
 Summary: Utility for setting up encrypted disks
 Name: cryptsetup
-Version: 2.7.2
-Release: 4%{?dist}
+Version: 2.8.1
+Release: 3%{?dist}
 License: GPLv2+ and LGPLv2+
 URL: https://gitlab.com/cryptsetup/cryptsetup
+BuildRequires: autoconf, automake, libtool, gettext-devel,
 BuildRequires: openssl-devel, popt-devel, device-mapper-devel
 BuildRequires: libuuid-devel, gcc, json-c-devel
 BuildRequires: libpwquality-devel, libblkid-devel
@@ -18,16 +19,15 @@ Provides: %{name}-reencrypt = %{version}
 Source0: https://www.kernel.org/pub/linux/utils/cryptsetup/v2.7/cryptsetup-%{upstream_version}.tar.xz
 
 Patch0001: %{name}-Add-FIPS-related-error-message-in-keyslot-add-code.patch
-Patch0002: %{name}-2.7.5-Do-not-handle-device-as-suspended-on-error.patch
-Patch0003: %{name}-2.7.5-Return-suspended-status-also-for-unknow-target-types.patch
-Patch0004: %{name}-2.7.5-Fix-detection-of-direct-io-with-suspended-devices.patch
-Patch0005: %{name}-2.7.5-Harden-online-reencryption-checks-in-initialization-.patch
-Patch0006: %{name}-2.7.5-Abort-online-reencryption-for-misconfigured-devices.patch
-Patch0007: %{name}-Enable-to-use-Argon2-in-FIPS-with-openssl-backend.patch
-Patch0008: %{name}-Warn-if-Argon2-keyslot-is-unlocked-in-FIPS-mode.patch
-Patch0009: %{name}-2.7.3-bitlk-Ignore-unknown-VMK-entry-24.patch
-# Following patch has to applied last
-Patch9999: %{name}-add-system-library-paths.patch
+Patch0002: %{name}-Enable-to-use-Argon2-in-FIPS-with-openssl-backend.patch
+Patch0003: %{name}-Warn-if-Argon2-keyslot-is-unlocked-in-FIPS-mode.patch
+Patch0004: %{name}-2.8.2-Improve-check-for-a-function-attribute-support.patch
+Patch0005: %{name}-2.8.2-Read-integrity-profile-info-from-top-level-device.patch
+Patch0006: %{name}-2.8.2-Fix-possible-use-of-uninitialized-variable.patch
+Patch0007: %{name}-2.8.2-Reinstate-pbkdf-serialization-flag-in-device-activat.patch
+Patch0008: %{name}-2.8.2-Fix-LUKS2-device-status-in-inline-HW-mode-and-detach.patch
+Patch0009: %{name}-2.8.2-Set-inline-integrity-flag-if-no-underlying-dm-integr.patch
+Patch0010: %{name}-2.8.4-Fix-wrong-device-size-status-reports-in-cryptsetup.patch
 
 %description
 The cryptsetup package contains a utility for setting up
@@ -69,6 +69,7 @@ disk integrity protection using dm-integrity kernel module.
 
 %build
 rm -f man/*.8
+./autogen.sh
 %configure --enable-fips --enable-pwquality --enable-internal-sse-argon2 --disable-ssh-token --enable-asciidoc --disable-hw-opal --with-plain-hash=ripemd160 --with-plain-cipher=aes --with-plain-mode=cbc-essiv:sha256
 %make_build
 
@@ -104,13 +105,30 @@ rm -rf %{buildroot}%{_libdir}/*.la
 %{_libdir}/pkgconfig/libcryptsetup.pc
 
 %files libs -f cryptsetup.lang
-%license COPYING COPYING.LGPL
+%license COPYING docs/licenses/COPYING.LGPL-2.1-or-later-WITH-cryptsetup-OpenSSL-exception
 %{_libdir}/libcryptsetup.so.*
 %dir %{_libdir}/%{name}/
 %{_tmpfilesdir}/cryptsetup.conf
 %ghost %attr(700, -, -) %dir /run/cryptsetup
 
 %changelog
+* Thu Dec 18 2025 Kristina Hanicova <khanicov@redhat.com> - 2.8.1-3
+- patch: Read integrity profile info from top level device.
+- patch: Fix possible use of uninitialized variable.
+- patch: Reinstate pbkdf serialization flag in device activation.
+- patch: Fix LUKS2 device status in inline HW mode and detached header.
+- patch: Set inline integrity flag if no underlying dm-integrity device.
+- patch: Fix wrong device size status reports in cryptsetup and integritysetup.
+- Resolves: RHEL-122297 RHEL-125152 RHEL-125167 RHEL-132585 RHEL-140106
+
+* Fri Sep 12 2025 Kristina Hanicova <khanicov@redhat.com> - 2.8.1-2
+- patch: Improve check for a function attribute support.
+- Resolves: 100089
+
+* Wed Sep 03 2025 Kristina Hanicova <khanicov@redhat.com> - 2.8.1-1
+- Update to cryptsetup 2.8.1.
+- Resolves: 100089
+
 * Wed Jun 04 2025 Ondrej Kozina <okozina@redhat.com> - 2.7.2-4
 - patch: Ignore unknown VMK entry 24 in bitlk metadata.
 - Resolves: RHEL-94860
