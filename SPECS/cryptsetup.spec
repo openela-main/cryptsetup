@@ -1,6 +1,6 @@
 Summary: Utility for setting up encrypted disks
 Name: cryptsetup
-Version: 2.7.5
+Version: 2.8.1
 Release: 2%{?dist}
 License: GPL-2.0-or-later WITH cryptsetup-OpenSSL-exception AND LGPL-2.1-or-later WITH cryptsetup-OpenSSL-exception
 URL: https://gitlab.com/cryptsetup/cryptsetup
@@ -16,12 +16,19 @@ Obsoletes: %{name}-reencrypt <= %{version}
 Provides: %{name}-reencrypt = %{version}
 
 %global upstream_version %{version_no_tilde}
-Source0: https://www.kernel.org/pub/linux/utils/cryptsetup/v2.7/cryptsetup-%{upstream_version}.tar.xz
+Source0: https://www.kernel.org/pub/linux/utils/cryptsetup/v2.8/cryptsetup-%{upstream_version}.tar.xz
 
 # Following patch has to applied last
 Patch0001: %{name}-Add-FIPS-related-error-message-in-keyslot-add-code.patch
 Patch0002: %{name}-Enable-to-use-Argon2-in-FIPS-with-openssl-backend.patch
 Patch0003: %{name}-Warn-if-Argon2-keyslot-is-unlocked-in-FIPS-mode.patch
+Patch0004: %{name}-2.8.2-opal-Submit-PSID-reset-command-to-R-W-file-descripto.patch
+Patch0005: %{name}-2.8.2-Read-integrity-profile-info-from-top-level-device.patch
+Patch0006: %{name}-2.8.2-Fix-possible-use-of-uninitialized-variable.patch
+Patch0007: %{name}-2.8.2-Reinstate-pbkdf-serialization-flag-in-device-activat.patch
+Patch0008: %{name}-2.8.2-Fix-LUKS2-device-status-in-inline-HW-mode-and-detach.patch
+Patch0009: %{name}-2.8.2-Set-inline-integrity-flag-if-no-underlying-dm-integr.patch
+Patch0010: %{name}-2.8.4-Fix-wrong-device-size-status-reports-in-cryptsetup.patch
 
 %description
 The cryptsetup package contains a utility for setting up
@@ -102,13 +109,27 @@ rm -rf %{buildroot}%{_libdir}/%{name}/*.la
 %{_libdir}/pkgconfig/libcryptsetup.pc
 
 %files libs -f cryptsetup.lang
-%license COPYING COPYING.LGPL
+%license COPYING docs/licenses/COPYING.LGPL-2.1-or-later-WITH-cryptsetup-OpenSSL-exception
 %{_libdir}/libcryptsetup.so.*
 %dir %{_libdir}/%{name}/
 %{_tmpfilesdir}/cryptsetup.conf
 %ghost %attr(700, -, -) %dir /run/cryptsetup
 
 %changelog
+* Fri Jan 09 2026 Kristina Hanicova <khanicov@redhat.com> - 2.8.1-2
+- patch: opal: Submit PSID reset command to R/W file descriptor.
+- patch: Read integrity profile info from top level device.
+- patch: Fix possible use of uninitialized variable.
+- patch: Reinstate pbkdf serialization flag in device activation.
+- patch: Fix LUKS2 device status in inline HW mode and detached header.
+- patch: Set inline integrity flag if no underlying dm-integrity device.
+- patch: Fix wrong device size status reports in cryptsetup and integritysetup.
+- Resolves: RHEL-122285 RHEL-125150 RHEL-125155 RHEL-125166 RHEL-132584 RHEL-140107
+
+* Wed Sep 03 2025 Kristina Hanicova <khanicov@redhat.com> - 2.8.1-1
+- Update to cryptsetup 2.8.1
+- Resolves: RHEL-96291
+
 * Tue Oct 29 2024 Troy Dawson <tdawson@redhat.com> - 2.7.5-2
 - Bump release for October 2024 mass rebuild:
   Resolves: RHEL-64018

@@ -1,0 +1,49 @@
+From 9810c6fb2f24073796aa1482680151ddbc668790 Mon Sep 17 00:00:00 2001
+Message-ID: <9810c6fb2f24073796aa1482680151ddbc668790.1766065092.git.khanicov@redhat.com>
+From: Ondrej Kozina <okozina@redhat.com>
+Date: Fri, 17 Oct 2025 15:13:41 +0200
+Subject: [PATCH] Read integrity profile info from top level device.
+
+When formating device with --integrity-inline option
+there's a check if underlying device properly advertise
+integrity profile support. The check did not work
+properly for partition device nodes. We have to read
+integrity profile info from top level block device.
+
+Fixes: #964.
+---
+ lib/utils_device.c | 16 +++++++++++++++-
+ 1 file changed, 15 insertions(+), 1 deletion(-)
+
+diff --git a/lib/utils_device.c b/lib/utils_device.c
+index 90ec9de4..1cdbcc65 100644
+--- a/lib/utils_device.c
++++ b/lib/utils_device.c
+@@ -1004,12 +1004,26 @@ int device_is_zoned(struct device *device)
+ 
+ int device_is_nop_dif(struct device *device, uint32_t *tag_size)
+ {
++	char *base_device_path;
++	int r;
+ 	struct stat st;
+ 
+ 	if (!device)
+ 		return -EINVAL;
+ 
+-	if (stat(device_path(device), &st) < 0)
++	/*
++	 * For partition devices, check integrity profile on the base device.
++	 * Partition device nodes don't advertise integrity profile directly
++	 * via sysfs attributes.
++	 */
++	base_device_path = crypt_get_base_device(device_path(device));
++	if (base_device_path) {
++		r = stat(base_device_path, &st);
++		free(base_device_path);
++	} else
++		r = stat(device_path(device), &st);
++
++	if (r < 0)
+ 		return -EINVAL;
+ 
+ 	if (!S_ISBLK(st.st_mode))

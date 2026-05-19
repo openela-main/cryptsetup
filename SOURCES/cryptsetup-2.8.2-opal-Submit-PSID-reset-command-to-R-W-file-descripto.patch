@@ -1,0 +1,38 @@
+From 4d98add260cfffcbfa4d233b5cf44d958691cde6 Mon Sep 17 00:00:00 2001
+Message-ID: <4d98add260cfffcbfa4d233b5cf44d958691cde6.1767995036.git.khanicov@redhat.com>
+From: Ondrej Kozina <okozina@redhat.com>
+Date: Mon, 6 Oct 2025 10:37:35 +0200
+Subject: [PATCH] opal: Submit PSID reset command to R/W file descriptor.
+
+The PSID reset erases the block device it's submitted to
+succesfully.
+
+By submitting the command to read-only fd previously
+there were partition device nodes still visible in
+the /dev directory because kernel does not trigger rescan
+after OPAL2 PSID reset. Even though all the partition were
+actually erased (including the partition table).
+
+We workaround the issue by submitting the PSID reset
+to R/W fd so that it triggers rescan event on close.
+---
+ lib/luks2/hw_opal/hw_opal.c | 6 +++++-
+ 1 file changed, 5 insertions(+), 1 deletion(-)
+
+diff --git a/lib/luks2/hw_opal/hw_opal.c b/lib/luks2/hw_opal/hw_opal.c
+index 8f88433f..ed1c5155 100644
+--- a/lib/luks2/hw_opal/hw_opal.c
++++ b/lib/luks2/hw_opal/hw_opal.c
+@@ -790,7 +790,11 @@ int opal_factory_reset(struct crypt_device *cd,
+ 	if (password_len > OPAL_KEY_MAX)
+ 		return -EINVAL;
+ 
+-	fd = device_open(cd, dev, O_RDONLY);
++	/*
++	 * Submit PSID reset on R/W file descriptor so it
++	 * triggers blkid rescan after we close it.
++	 */
++	fd = device_open(cd, dev, O_RDWR);
+ 	if (fd < 0)
+ 		return -EIO;
+ 
