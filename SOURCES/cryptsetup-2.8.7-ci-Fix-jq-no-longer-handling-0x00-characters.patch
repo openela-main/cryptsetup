@@ -1,0 +1,36 @@
+From 6298269486354834d4037ba294c91452dec4c2f5 Mon Sep 17 00:00:00 2001
+Message-ID: <6298269486354834d4037ba294c91452dec4c2f5.1778441448.git.khanicov@redhat.com>
+From: Milan Broz <gmazyland@gmail.com>
+Date: Fri, 17 Apr 2026 18:02:12 +0200
+Subject: [PATCH] ci: Fix jq no longer handling 0x00 characters
+
+Due to jq fix for CVE-2026-33948, we cannot use json with trailing 0x00.
+
+Just remove them and parse through jq.
+
+Fixes: #989
+---
+ tests/generators/lib.sh | 5 ++++-
+ 1 file changed, 4 insertions(+), 1 deletion(-)
+
+diff --git a/tests/generators/lib.sh b/tests/generators/lib.sh
+index 51d38700..440dff7c 100644
+--- a/tests/generators/lib.sh
++++ b/tests/generators/lib.sh
+@@ -175,9 +175,12 @@ _dd()
+ 	dd $@ status=none
+ }
+ 
++# Remove all trailing 0x00 characters
++# Last parameter must be an input file
+ _jq()
+ {
+-	jq -c "$@"
++	local last="${!#}"
++	sed 's/\x00*$//' "$last" | jq -c "${@:1:$#-1}"
+ }
+ 
+ write_bin_hdr_size() {
+-- 
+2.53.0
+
