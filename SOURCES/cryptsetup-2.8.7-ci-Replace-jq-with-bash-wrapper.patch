@@ -1,0 +1,1729 @@
+From fe0afb9046e6cd3ad5bb53f091fdabb4d2276de3 Mon Sep 17 00:00:00 2001
+Message-ID: <fe0afb9046e6cd3ad5bb53f091fdabb4d2276de3.1778441391.git.khanicov@redhat.com>
+From: Milan Broz <gmazyland@gmail.com>
+Date: Fri, 17 Apr 2026 17:36:20 +0200
+Subject: [PATCH] ci: Replace jq with bash wrapper
+
+To be used later.
+---
+ .../generate-luks2-area-in-json-hdr-space-json0.img.sh      | 4 ++--
+ .../generators/generate-luks2-argon2-leftover-params.img.sh | 6 +++---
+ tests/generators/generate-luks2-invalid-json-size-c0.img.sh | 4 ++--
+ tests/generators/generate-luks2-invalid-json-size-c1.img.sh | 4 ++--
+ tests/generators/generate-luks2-invalid-json-size-c2.img.sh | 4 ++--
+ .../generate-luks2-invalid-keyslots-size-c0.img.sh          | 4 ++--
+ .../generate-luks2-invalid-keyslots-size-c1.img.sh          | 4 ++--
+ .../generate-luks2-invalid-keyslots-size-c2.img.sh          | 4 ++--
+ tests/generators/generate-luks2-invalid-tokens.img.sh       | 4 ++--
+ tests/generators/generate-luks2-invalid-top-objects.img.sh  | 4 ++--
+ tests/generators/generate-luks2-keyslot-invalid-af.img.sh   | 4 ++--
+ .../generate-luks2-keyslot-invalid-area-size.img.sh         | 4 ++--
+ tests/generators/generate-luks2-keyslot-invalid-area.img.sh | 4 ++--
+ .../generate-luks2-keyslot-invalid-objects.img.sh           | 4 ++--
+ .../generators/generate-luks2-keyslot-missing-digest.img.sh | 6 +++---
+ .../generate-luks2-keyslot-too-many-digests.img.sh          | 4 ++--
+ .../generate-luks2-metadata-size-128k-secondary.img.sh      | 4 ++--
+ tests/generators/generate-luks2-metadata-size-128k.img.sh   | 4 ++--
+ .../generate-luks2-metadata-size-16k-secondary.img.sh       | 4 ++--
+ .../generate-luks2-metadata-size-1m-secondary.img.sh        | 4 ++--
+ tests/generators/generate-luks2-metadata-size-1m.img.sh     | 4 ++--
+ .../generate-luks2-metadata-size-256k-secondary.img.sh      | 4 ++--
+ tests/generators/generate-luks2-metadata-size-256k.img.sh   | 4 ++--
+ .../generate-luks2-metadata-size-2m-secondary.img.sh        | 4 ++--
+ tests/generators/generate-luks2-metadata-size-2m.img.sh     | 4 ++--
+ .../generate-luks2-metadata-size-32k-secondary.img.sh       | 4 ++--
+ tests/generators/generate-luks2-metadata-size-32k.img.sh    | 4 ++--
+ .../generate-luks2-metadata-size-4m-secondary.img.sh        | 4 ++--
+ tests/generators/generate-luks2-metadata-size-4m.img.sh     | 4 ++--
+ .../generate-luks2-metadata-size-512k-secondary.img.sh      | 4 ++--
+ tests/generators/generate-luks2-metadata-size-512k.img.sh   | 4 ++--
+ .../generate-luks2-metadata-size-64k-inv-area-c0.img.sh     | 4 ++--
+ .../generate-luks2-metadata-size-64k-inv-area-c1.img.sh     | 4 ++--
+ ...rate-luks2-metadata-size-64k-inv-keyslots-size-c0.img.sh | 4 ++--
+ .../generate-luks2-metadata-size-64k-secondary.img.sh       | 4 ++--
+ tests/generators/generate-luks2-metadata-size-64k.img.sh    | 4 ++--
+ .../generate-luks2-metadata-size-invalid-secondary.img.sh   | 4 ++--
+ .../generators/generate-luks2-metadata-size-invalid.img.sh  | 4 ++--
+ ...nerate-luks2-missing-keyslot-referenced-in-digest.img.sh | 6 +++---
+ ...enerate-luks2-missing-keyslot-referenced-in-token.img.sh | 4 ++--
+ ...nerate-luks2-missing-segment-referenced-in-digest.img.sh | 6 +++---
+ .../generate-luks2-non-compact-json-4k-token-0.img.sh       | 2 +-
+ .../generate-luks2-non-compact-json-token-0.img.sh          | 2 +-
+ .../generate-luks2-overlapping-areas-c0-json0.img.sh        | 4 ++--
+ .../generate-luks2-overlapping-areas-c1-json0.img.sh        | 4 ++--
+ .../generate-luks2-overlapping-areas-c2-json0.img.sh        | 4 ++--
+ .../generate-luks2-pbkdf2-leftover-params-0.img.sh          | 6 +++---
+ .../generate-luks2-pbkdf2-leftover-params-1.img.sh          | 6 +++---
+ .../generate-luks2-segment-crypt-empty-encryption.img.sh    | 4 ++--
+ .../generate-luks2-segment-crypt-missing-encryption.img.sh  | 4 ++--
+ .../generate-luks2-segment-crypt-missing-ivoffset.img.sh    | 4 ++--
+ .../generate-luks2-segment-crypt-missing-sectorsize.img.sh  | 4 ++--
+ .../generate-luks2-segment-crypt-wrong-encryption.img.sh    | 4 ++--
+ .../generate-luks2-segment-crypt-wrong-ivoffset.img.sh      | 4 ++--
+ .../generate-luks2-segment-crypt-wrong-sectorsize-0.img.sh  | 4 ++--
+ .../generate-luks2-segment-crypt-wrong-sectorsize-1.img.sh  | 4 ++--
+ .../generate-luks2-segment-crypt-wrong-sectorsize-2.img.sh  | 4 ++--
+ .../generators/generate-luks2-segment-missing-offset.img.sh | 4 ++--
+ tests/generators/generate-luks2-segment-missing-size.img.sh | 4 ++--
+ tests/generators/generate-luks2-segment-missing-type.img.sh | 4 ++--
+ tests/generators/generate-luks2-segment-two.img.sh          | 4 ++--
+ tests/generators/generate-luks2-segment-unknown-type.img.sh | 4 ++--
+ .../generate-luks2-segment-wrong-backup-key-0.img.sh        | 4 ++--
+ .../generate-luks2-segment-wrong-backup-key-1.img.sh        | 4 ++--
+ .../generate-luks2-segment-wrong-flags-element.img.sh       | 4 ++--
+ tests/generators/generate-luks2-segment-wrong-flags.img.sh  | 4 ++--
+ tests/generators/generate-luks2-segment-wrong-offset.img.sh | 4 ++--
+ tests/generators/generate-luks2-segment-wrong-size-0.img.sh | 4 ++--
+ tests/generators/generate-luks2-segment-wrong-size-1.img.sh | 4 ++--
+ tests/generators/generate-luks2-segment-wrong-size-2.img.sh | 4 ++--
+ tests/generators/generate-luks2-segment-wrong-type.img.sh   | 4 ++--
+ .../generate-luks2-uint64-max-segment-size.img.sh           | 4 ++--
+ .../generate-luks2-uint64-overflow-segment-size.img.sh      | 4 ++--
+ .../generate-luks2-uint64-signed-segment-size.img.sh        | 4 ++--
+ tests/generators/lib.sh                                     | 5 +++++
+ 75 files changed, 157 insertions(+), 152 deletions(-)
+
+diff --git a/tests/generators/generate-luks2-area-in-json-hdr-space-json0.img.sh b/tests/generators/generate-luks2-area-in-json-hdr-space-json0.img.sh
+index b1f85a9f..061e5ea9 100755
+--- a/tests/generators/generate-luks2-area-in-json-hdr-space-json0.img.sh
++++ b/tests/generators/generate-luks2-area-in-json-hdr-space-json0.img.sh
+@@ -19,7 +19,7 @@ generate()
+ 	# make area 7 access the luks2 header space
+ 	OFFS=$((2*LUKS2_HDR_SIZE*512-1))
+ 	LEN=1
+-	json_str=$(jq -c --arg off $OFFS --arg len $LEN \
++	json_str=$(_jq --arg off $OFFS --arg len $LEN \
+ 		   '.keyslots."0".area.offset = $off | .keyslots."0".area.size = $len' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+@@ -33,7 +33,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c --arg off $OFFS --arg len $LEN \
++	_jq --arg off $OFFS --arg len $LEN \
+ 	    'if (.keyslots."0".area.offset != $off) or (.keyslots."0".area.size != $len)
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+diff --git a/tests/generators/generate-luks2-argon2-leftover-params.img.sh b/tests/generators/generate-luks2-argon2-leftover-params.img.sh
+index a0d920c1..4ad80873 100755
+--- a/tests/generators/generate-luks2-argon2-leftover-params.img.sh
++++ b/tests/generators/generate-luks2-argon2-leftover-params.img.sh
+@@ -17,8 +17,8 @@
+ generate()
+ {
+ 	# add keyslot 1 to second digest
+-	obj_len=$(jq -c -M '.keyslots."1".kdf | length' $TMPDIR/json0)
+-	json_str=$(jq -r -c -M '.keyslots."1".kdf.type = "pbkdf2" | .keyslots."1".kdf.iterations = 1001 | .keyslots."1".kdf.hash = "sha256"' $TMPDIR/json0)
++	obj_len=$(_jq -M '.keyslots."1".kdf | length' $TMPDIR/json0)
++	json_str=$(_jq -r -M '.keyslots."1".kdf.type = "pbkdf2" | .keyslots."1".kdf.iterations = 1001 | .keyslots."1".kdf.hash = "sha256"' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -32,7 +32,7 @@ check()
+ 	lib_hdr0_checksum || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	new_obj_len=$(jq -c -M '.keyslots."1".kdf | length' $TMPDIR/json_res0)
++	new_obj_len=$(_jq -M '.keyslots."1".kdf | length' $TMPDIR/json_res0)
+ 	test $((obj_len+2)) -eq $new_obj_len || exit 2
+ }
+ 
+diff --git a/tests/generators/generate-luks2-invalid-json-size-c0.img.sh b/tests/generators/generate-luks2-invalid-json-size-c0.img.sh
+index 2991d87a..ee88cfc3 100755
+--- a/tests/generators/generate-luks2-invalid-json-size-c0.img.sh
++++ b/tests/generators/generate-luks2-invalid-json-size-c0.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	JS=$(((LUKS2_HDR_SIZE-LUKS2_BIN_HDR_SIZE)*512+4096))
+-	json_str=$(jq -c --arg js $JS '.config.json_size = ($js | tostring)' $TMPDIR/json0)
++	json_str=$(_jq --arg js $JS '.config.json_size = ($js | tostring)' $TMPDIR/json0)
+ 	test -n "$json_str" || exit 2
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+@@ -30,7 +30,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c --arg js $JS 'if .config.json_size != ($js | tostring )
++	_jq --arg js $JS 'if .config.json_size != ($js | tostring )
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-invalid-json-size-c1.img.sh b/tests/generators/generate-luks2-invalid-json-size-c1.img.sh
+index dddf99a3..73f17632 100755
+--- a/tests/generators/generate-luks2-invalid-json-size-c1.img.sh
++++ b/tests/generators/generate-luks2-invalid-json-size-c1.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	JS=$(((LUKS2_HDR_SIZE-LUKS2_BIN_HDR_SIZE)*512-4096))
+-	json_str=$(jq -c --arg js $JS '.config.json_size = ($js | tostring)' $TMPDIR/json0)
++	json_str=$(_jq --arg js $JS '.config.json_size = ($js | tostring)' $TMPDIR/json0)
+ 	test -n "$json_str" || exit 2
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+@@ -30,7 +30,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c --arg js $JS 'if .config.json_size != ($js | tostring )
++	_jq --arg js $JS 'if .config.json_size != ($js | tostring )
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-invalid-json-size-c2.img.sh b/tests/generators/generate-luks2-invalid-json-size-c2.img.sh
+index 47606185..cb7afaae 100755
+--- a/tests/generators/generate-luks2-invalid-json-size-c2.img.sh
++++ b/tests/generators/generate-luks2-invalid-json-size-c2.img.sh
+@@ -21,7 +21,7 @@ generate()
+ 	TEST_MDA_SIZE_BYTES=$((TEST_MDA_SIZE*512))
+ 	TEST_JSN_SIZE=$((TEST_MDA_SIZE-LUKS2_BIN_HDR_SIZE))
+ 
+-	json_str=$(jq -c '.' $TMPDIR/json0)
++	json_str=$(_jq '.' $TMPDIR/json0)
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0 $TEST_JSN_SIZE
+ 	write_luks2_json "$json_str" $TMPDIR/json1 $TEST_JSN_SIZE
+@@ -45,7 +45,7 @@ check()
+ 	test "$str_res1" = "SKUL" || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c --arg js $JS 'if .config.json_size != ( $js | tostring )
++	_jq --arg js $JS 'if .config.json_size != ( $js | tostring )
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-invalid-keyslots-size-c0.img.sh b/tests/generators/generate-luks2-invalid-keyslots-size-c0.img.sh
+index 8d509db1..4c219185 100755
+--- a/tests/generators/generate-luks2-invalid-keyslots-size-c0.img.sh
++++ b/tests/generators/generate-luks2-invalid-keyslots-size-c0.img.sh
+@@ -18,7 +18,7 @@ generate()
+ {
+ 	# make area 7 being included in area 6
+ 	OFFS=$((2*LUKS2_HDR_SIZE*512))
+-	json_str=$(jq -c --arg off $OFFS '.config.keyslots_size = (.segments."0".offset | tonumber - ($off | tonumber) + 4096 | tostring)' $TMPDIR/json0)
++	json_str=$(_jq --arg off $OFFS '.config.keyslots_size = (.segments."0".offset | tonumber - ($off | tonumber) + 4096 | tostring)' $TMPDIR/json0)
+ 	test -n "$json_str" || exit 2
+ 	# [.keyslots[].area.offset | tonumber] | max | tostring ---> max offset in keyslot areas
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+@@ -33,7 +33,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c --arg off $OFFS 'if .config.keyslots_size != ( .segments."0".offset | tonumber - ($off | tonumber) + 4096 | tostring )
++	_jq --arg off $OFFS 'if .config.keyslots_size != ( .segments."0".offset | tonumber - ($off | tonumber) + 4096 | tostring )
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-invalid-keyslots-size-c1.img.sh b/tests/generators/generate-luks2-invalid-keyslots-size-c1.img.sh
+index c66ffcfe..cdcc31f3 100755
+--- a/tests/generators/generate-luks2-invalid-keyslots-size-c1.img.sh
++++ b/tests/generators/generate-luks2-invalid-keyslots-size-c1.img.sh
+@@ -15,7 +15,7 @@
+ 
+ generate()
+ {
+-	json_str=$(jq -c '.config.keyslots_size = (.config.keyslots_size | tonumber - 1 | tostring)' $TMPDIR/json0)
++	json_str=$(_jq '.config.keyslots_size = (.config.keyslots_size | tonumber - 1 | tostring)' $TMPDIR/json0)
+ 	test -n "$json_str" || exit 2
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if (.config.keyslots_size | tonumber % 4096) == 0
++	_jq 'if (.config.keyslots_size | tonumber % 4096) == 0
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-invalid-keyslots-size-c2.img.sh b/tests/generators/generate-luks2-invalid-keyslots-size-c2.img.sh
+index 4f96ef81..b5d90578 100755
+--- a/tests/generators/generate-luks2-invalid-keyslots-size-c2.img.sh
++++ b/tests/generators/generate-luks2-invalid-keyslots-size-c2.img.sh
+@@ -16,7 +16,7 @@
+ 
+ generate()
+ {
+-	json_str=$(jq '.config.keyslots_size = ([.keyslots[].area.size] | map(tonumber) | add - 4096 | tostring )' $TMPDIR/json0)
++	json_str=$(_jq '.config.keyslots_size = ([.keyslots[].area.size] | map(tonumber) | add - 4096 | tostring )' $TMPDIR/json0)
+ 	test -n "$json_str" || exit 2
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+@@ -30,7 +30,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .config.keyslots_size != ([.keyslots[].area.size ] | map(tonumber) | add - 4096 | tostring)
++	_jq 'if .config.keyslots_size != ([.keyslots[].area.size ] | map(tonumber) | add - 4096 | tostring)
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-invalid-tokens.img.sh b/tests/generators/generate-luks2-invalid-tokens.img.sh
+index 6475bd44..31c4f370 100755
+--- a/tests/generators/generate-luks2-invalid-tokens.img.sh
++++ b/tests/generators/generate-luks2-invalid-tokens.img.sh
+@@ -14,7 +14,7 @@
+ 
+ generate()
+ {
+-	json_str=$(jq -c 'del(.tokens) | .tokens = 42' $TMPDIR/json0)
++	json_str=$(_jq 'del(.tokens) | .tokens = 42' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -30,7 +30,7 @@ check()
+ 	lib_hdr1_checksum || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .tokens != 42
++	_jq 'if .tokens != 42
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-invalid-top-objects.img.sh b/tests/generators/generate-luks2-invalid-top-objects.img.sh
+index cbb51f4e..f1420569 100755
+--- a/tests/generators/generate-luks2-invalid-top-objects.img.sh
++++ b/tests/generators/generate-luks2-invalid-top-objects.img.sh
+@@ -14,7 +14,7 @@
+ 
+ generate()
+ {
+-	json_str=$(jq -c 'del(.tokens) | .tokens = 42 |
++	json_str=$(_jq 'del(.tokens) | .tokens = 42 |
+ 			  del(.digests) | .digests = 42 |
+ 			  del(.keyslots) | .keyslots = [] |
+ 			  del(.segments) | .segments = "hi"' $TMPDIR/json0)
+@@ -33,7 +33,7 @@ check()
+ 	lib_hdr1_checksum || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if (.tokens != 42) or (.digests != 42) or (.keyslots != []) or (.segments != "hi")
++	_jq 'if (.tokens != 42) or (.digests != 42) or (.keyslots != []) or (.segments != "hi")
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-keyslot-invalid-af.img.sh b/tests/generators/generate-luks2-keyslot-invalid-af.img.sh
+index 1825780e..cc8704ed 100755
+--- a/tests/generators/generate-luks2-keyslot-invalid-af.img.sh
++++ b/tests/generators/generate-luks2-keyslot-invalid-af.img.sh
+@@ -14,7 +14,7 @@
+ 
+ generate()
+ {
+-	json_str=$(jq -c 'del(.keyslots."0".af.type) | .keyslots."0".af.type = 42' $TMPDIR/json0)
++	json_str=$(_jq 'del(.keyslots."0".af.type) | .keyslots."0".af.type = 42' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -30,7 +30,7 @@ check()
+ 	lib_hdr1_checksum || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if (.keyslots."0".af.type != 42)
++	_jq 'if (.keyslots."0".af.type != 42)
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-keyslot-invalid-area-size.img.sh b/tests/generators/generate-luks2-keyslot-invalid-area-size.img.sh
+index 59bfd1ee..115b4966 100755
+--- a/tests/generators/generate-luks2-keyslot-invalid-area-size.img.sh
++++ b/tests/generators/generate-luks2-keyslot-invalid-area-size.img.sh
+@@ -14,7 +14,7 @@
+ 
+ generate()
+ {
+-	json_str=$(jq -c '.keyslots."0"."area".size = "18446744073709551615"' $TMPDIR/json0)
++	json_str=$(_jq '.keyslots."0"."area".size = "18446744073709551615"' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -30,7 +30,7 @@ check()
+ 	lib_hdr1_checksum || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if (.keyslots."0"."area".size != "18446744073709551615")
++	_jq 'if (.keyslots."0"."area".size != "18446744073709551615")
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-keyslot-invalid-area.img.sh b/tests/generators/generate-luks2-keyslot-invalid-area.img.sh
+index 5d144391..9389164e 100755
+--- a/tests/generators/generate-luks2-keyslot-invalid-area.img.sh
++++ b/tests/generators/generate-luks2-keyslot-invalid-area.img.sh
+@@ -14,7 +14,7 @@
+ 
+ generate()
+ {
+-	json_str=$(jq -c 'del(.keyslots."0".area) | .keyslots."0".area = 42' $TMPDIR/json0)
++	json_str=$(_jq 'del(.keyslots."0".area) | .keyslots."0".area = 42' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -30,7 +30,7 @@ check()
+ 	lib_hdr1_checksum || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if (.keyslots."0".area != 42)
++	_jq 'if (.keyslots."0".area != 42)
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-keyslot-invalid-objects.img.sh b/tests/generators/generate-luks2-keyslot-invalid-objects.img.sh
+index 46bedd5a..d69d825b 100755
+--- a/tests/generators/generate-luks2-keyslot-invalid-objects.img.sh
++++ b/tests/generators/generate-luks2-keyslot-invalid-objects.img.sh
+@@ -14,7 +14,7 @@
+ 
+ generate()
+ {
+-	json_str=$(jq -c 'del(.keyslots."0".kdf) | .keyslots."0".kdf = 42 |
++	json_str=$(_jq 'del(.keyslots."0".kdf) | .keyslots."0".kdf = 42 |
+ 		  del(.keyslots."0".af) | .keyslots."0".af = 42' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+@@ -31,7 +31,7 @@ check()
+ 	lib_hdr1_checksum || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if (.keyslots."0".kdf != 42) or (.keyslots."0".af != 42)
++	_jq 'if (.keyslots."0".kdf != 42) or (.keyslots."0".af != 42)
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-keyslot-missing-digest.img.sh b/tests/generators/generate-luks2-keyslot-missing-digest.img.sh
+index c675783b..4b74284e 100755
+--- a/tests/generators/generate-luks2-keyslot-missing-digest.img.sh
++++ b/tests/generators/generate-luks2-keyslot-missing-digest.img.sh
+@@ -17,9 +17,9 @@
+ generate()
+ {
+ 	read -r json_str_orig < $TMPDIR/json0
+-	arr_len=$(jq -c -M '.digests."0".keyslots | length' $TMPDIR/json0)
++	arr_len=$(_jq -M '.digests."0".keyslots | length' $TMPDIR/json0)
+ 	# remove first element from digests."0".keyslots array
+-	json_str=$(jq -r -c -M 'del(.digests."0".keyslots[0])' $TMPDIR/json0)
++	json_str=$(_jq -r -M 'del(.digests."0".keyslots[0])' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -33,7 +33,7 @@ check()
+ 	lib_hdr0_checksum || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	new_arr_len=$(jq -c -M '.digests."0".keyslots | length' $TMPDIR/json_res0)
++	new_arr_len=$(_jq -M '.digests."0".keyslots | length' $TMPDIR/json_res0)
+ 	test $((arr_len-1)) -eq $new_arr_len || exit 2
+ }
+ 
+diff --git a/tests/generators/generate-luks2-keyslot-too-many-digests.img.sh b/tests/generators/generate-luks2-keyslot-too-many-digests.img.sh
+index d86efce2..576c8365 100755
+--- a/tests/generators/generate-luks2-keyslot-too-many-digests.img.sh
++++ b/tests/generators/generate-luks2-keyslot-too-many-digests.img.sh
+@@ -17,7 +17,7 @@
+ generate()
+ {
+ 	# add keyslot 1 to second digest
+-	json_str=$(jq -r -c -M '.digests."1" = .digests."0" | .digests."1".keyslots = ["1"]' $TMPDIR/json0)
++	json_str=$(_jq -r -M '.digests."1" = .digests."0" | .digests."1".keyslots = ["1"]' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -31,7 +31,7 @@ check()
+ 	lib_hdr0_checksum || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	new_arr_len=$(jq -c -M '.digests."1".keyslots | length' $TMPDIR/json_res0)
++	new_arr_len=$(_jq -M '.digests."1".keyslots | length' $TMPDIR/json_res0)
+ 	test 1 -eq $new_arr_len || exit 2
+ }
+ 
+diff --git a/tests/generators/generate-luks2-metadata-size-128k-secondary.img.sh b/tests/generators/generate-luks2-metadata-size-128k-secondary.img.sh
+index 248db119..29b7d152 100755
+--- a/tests/generators/generate-luks2-metadata-size-128k-secondary.img.sh
++++ b/tests/generators/generate-luks2-metadata-size-128k-secondary.img.sh
+@@ -28,7 +28,7 @@ generate()
+ 	JSON_SIZE=$((TEST_JSN_SIZE*512))
+ 	DATA_OFFSET=16777216
+ 
+-	json_str=$(jq -c --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
++	json_str=$(_jq --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
+ 		   '.keyslots[].area.offset |= ( . | tonumber + ($jdiff | tonumber) | tostring) |
+ 		    .config.json_size = $jsize |
+ 		    .segments."0".offset = $off' $TMPDIR/json0)
+@@ -52,7 +52,7 @@ check()
+ 	lib_hdr0_killed $TEST_MDA_SIZE || exit 2
+ 
+ 	read_luks2_json1 $TGT_IMG $TMPDIR/json_res1 $TEST_JSN_SIZE
+-	jq -c --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
++	_jq --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
+ 		'if ([.keyslots[].area.offset] | map(tonumber) | min | tostring != $koff) or
+ 		    (.config.json_size != $jsize)
+ 		then error("Unexpected value in result json") else empty end' $TMPDIR/json_res1 || exit 5
+diff --git a/tests/generators/generate-luks2-metadata-size-128k.img.sh b/tests/generators/generate-luks2-metadata-size-128k.img.sh
+index 8fa8c491..39358102 100755
+--- a/tests/generators/generate-luks2-metadata-size-128k.img.sh
++++ b/tests/generators/generate-luks2-metadata-size-128k.img.sh
+@@ -27,7 +27,7 @@ generate()
+ 	JSON_SIZE=$((TEST_JSN_SIZE*512))
+ 	DATA_OFFSET=16777216
+ 
+-	json_str=$(jq -c --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
++	json_str=$(_jq --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
+ 		   '.keyslots[].area.offset |= ( . | tonumber + ($jdiff | tonumber) | tostring) |
+ 		    .config.json_size = $jsize |
+ 		    .segments."0".offset = $off' $TMPDIR/json0)
+@@ -49,7 +49,7 @@ check()
+ 	lib_hdr1_killed $TEST_MDA_SIZE || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0 $TEST_JSN_SIZE
+-	jq -c --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
++	_jq --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
+ 		'if ([.keyslots[].area.offset] | map(tonumber) | min | tostring != $koff) or
+ 		    (.config.json_size != $jsize)
+ 		then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+diff --git a/tests/generators/generate-luks2-metadata-size-16k-secondary.img.sh b/tests/generators/generate-luks2-metadata-size-16k-secondary.img.sh
+index b053428f..8746a9ba 100755
+--- a/tests/generators/generate-luks2-metadata-size-16k-secondary.img.sh
++++ b/tests/generators/generate-luks2-metadata-size-16k-secondary.img.sh
+@@ -28,7 +28,7 @@ generate()
+ 	JSON_SIZE=$((TEST_JSN_SIZE*512))
+ 	DATA_OFFSET=16777216
+ 
+-	json_str=$(jq -c --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
++	json_str=$(_jq --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
+ 		   '.keyslots[].area.offset |= ( . | tonumber + ($jdiff | tonumber) | tostring) |
+ 		    .config.json_size = $jsize |
+ 		    .segments."0".offset = $off' $TMPDIR/json0)
+@@ -52,7 +52,7 @@ check()
+ 	lib_hdr0_killed $TEST_MDA_SIZE || exit 2
+ 
+ 	read_luks2_json1 $TGT_IMG $TMPDIR/json_res1 $TEST_JSN_SIZE
+-	jq -c --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
++	_jq --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
+ 		'if ([.keyslots[].area.offset] | map(tonumber) | min | tostring != $koff) or
+ 		    (.config.json_size != $jsize)
+ 		then error("Unexpected value in result json") else empty end' $TMPDIR/json_res1 || exit 5
+diff --git a/tests/generators/generate-luks2-metadata-size-1m-secondary.img.sh b/tests/generators/generate-luks2-metadata-size-1m-secondary.img.sh
+index 61f72203..01643e7c 100755
+--- a/tests/generators/generate-luks2-metadata-size-1m-secondary.img.sh
++++ b/tests/generators/generate-luks2-metadata-size-1m-secondary.img.sh
+@@ -28,7 +28,7 @@ generate()
+ 	JSON_SIZE=$((TEST_JSN_SIZE*512))
+ 	DATA_OFFSET=16777216
+ 
+-	json_str=$(jq -c --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
++	json_str=$(_jq --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
+ 		   '.keyslots[].area.offset |= ( . | tonumber + ($jdiff | tonumber) | tostring) |
+ 		    .config.json_size = $jsize |
+ 		    .segments."0".offset = $off' $TMPDIR/json0)
+@@ -52,7 +52,7 @@ check()
+ 	lib_hdr0_killed $TEST_MDA_SIZE || exit 2
+ 
+ 	read_luks2_json1 $TGT_IMG $TMPDIR/json_res1 $TEST_JSN_SIZE
+-	jq -c --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
++	_jq --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
+ 		'if ([.keyslots[].area.offset] | map(tonumber) | min | tostring != $koff) or
+ 		    (.config.json_size != $jsize)
+ 		then error("Unexpected value in result json") else empty end' $TMPDIR/json_res1 || exit 5
+diff --git a/tests/generators/generate-luks2-metadata-size-1m.img.sh b/tests/generators/generate-luks2-metadata-size-1m.img.sh
+index baced6ee..833d70b8 100755
+--- a/tests/generators/generate-luks2-metadata-size-1m.img.sh
++++ b/tests/generators/generate-luks2-metadata-size-1m.img.sh
+@@ -27,7 +27,7 @@ generate()
+ 	JSON_SIZE=$((TEST_JSN_SIZE*512))
+ 	DATA_OFFSET=16777216
+ 
+-	json_str=$(jq -c --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
++	json_str=$(_jq --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
+ 		   '.keyslots[].area.offset |= ( . | tonumber + ($jdiff | tonumber) | tostring) |
+ 		    .config.json_size = $jsize |
+ 		    .segments."0".offset = $off' $TMPDIR/json0)
+@@ -49,7 +49,7 @@ check()
+ 	lib_hdr1_killed $TEST_MDA_SIZE || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0 $TEST_JSN_SIZE
+-	jq -c --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
++	_jq --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
+ 		'if ([.keyslots[].area.offset] | map(tonumber) | min | tostring != $koff) or
+ 		    (.config.json_size != $jsize)
+ 		then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+diff --git a/tests/generators/generate-luks2-metadata-size-256k-secondary.img.sh b/tests/generators/generate-luks2-metadata-size-256k-secondary.img.sh
+index 8d42cc52..f7f131b9 100755
+--- a/tests/generators/generate-luks2-metadata-size-256k-secondary.img.sh
++++ b/tests/generators/generate-luks2-metadata-size-256k-secondary.img.sh
+@@ -28,7 +28,7 @@ generate()
+ 	JSON_SIZE=$((TEST_JSN_SIZE*512))
+ 	DATA_OFFSET=16777216
+ 
+-	json_str=$(jq -c --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
++	json_str=$(_jq --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
+ 		   '.keyslots[].area.offset |= ( . | tonumber + ($jdiff | tonumber) | tostring) |
+ 		    .config.json_size = $jsize |
+ 		    .segments."0".offset = $off' $TMPDIR/json0)
+@@ -52,7 +52,7 @@ check()
+ 	lib_hdr0_killed $TEST_MDA_SIZE || exit 2
+ 
+ 	read_luks2_json1 $TGT_IMG $TMPDIR/json_res1 $TEST_JSN_SIZE
+-	jq -c --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
++	_jq --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
+ 		'if ([.keyslots[].area.offset] | map(tonumber) | min | tostring != $koff) or
+ 		    (.config.json_size != $jsize)
+ 		then error("Unexpected value in result json") else empty end' $TMPDIR/json_res1 || exit 5
+diff --git a/tests/generators/generate-luks2-metadata-size-256k.img.sh b/tests/generators/generate-luks2-metadata-size-256k.img.sh
+index d65d7485..94645740 100755
+--- a/tests/generators/generate-luks2-metadata-size-256k.img.sh
++++ b/tests/generators/generate-luks2-metadata-size-256k.img.sh
+@@ -28,7 +28,7 @@ generate()
+ 	JSON_SIZE=$((TEST_JSN_SIZE*512))
+ 	DATA_OFFSET=16777216
+ 
+-	json_str=$(jq -c --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
++	json_str=$(_jq --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
+ 		   '.keyslots[].area.offset |= ( . | tonumber + ($jdiff | tonumber) | tostring) |
+ 		    .config.json_size = $jsize |
+ 		    .segments."0".offset = $off' $TMPDIR/json0)
+@@ -50,7 +50,7 @@ check()
+ 	lib_hdr1_killed $TEST_MDA_SIZE || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0 $TEST_JSN_SIZE
+-	jq -c --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
++	_jq --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
+ 		'if ([.keyslots[].area.offset] | map(tonumber) | min | tostring != $koff) or
+ 		    (.config.json_size != $jsize)
+ 		then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+diff --git a/tests/generators/generate-luks2-metadata-size-2m-secondary.img.sh b/tests/generators/generate-luks2-metadata-size-2m-secondary.img.sh
+index bc95c684..532029a5 100755
+--- a/tests/generators/generate-luks2-metadata-size-2m-secondary.img.sh
++++ b/tests/generators/generate-luks2-metadata-size-2m-secondary.img.sh
+@@ -27,7 +27,7 @@ generate()
+ 	JSON_SIZE=$((TEST_JSN_SIZE*512))
+ 	DATA_OFFSET=16777216
+ 
+-	json_str=$(jq -c --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
++	json_str=$(_jq --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
+ 		   '.keyslots[].area.offset |= ( . | tonumber + ($jdiff | tonumber) | tostring) |
+ 		    .config.json_size = $jsize |
+ 		    .segments."0".offset = $off' $TMPDIR/json0)
+@@ -51,7 +51,7 @@ check()
+ 	lib_hdr0_killed $TEST_MDA_SIZE || exit 2
+ 
+ 	read_luks2_json1 $TGT_IMG $TMPDIR/json_res1 $TEST_JSN_SIZE
+-	jq -c --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
++	_jq --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
+ 		'if ([.keyslots[].area.offset] | map(tonumber) | min | tostring != $koff) or
+ 		    (.config.json_size != $jsize)
+ 		then error("Unexpected value in result json") else empty end' $TMPDIR/json_res1 || exit 5
+diff --git a/tests/generators/generate-luks2-metadata-size-2m.img.sh b/tests/generators/generate-luks2-metadata-size-2m.img.sh
+index 9997bd49..d81f60ce 100755
+--- a/tests/generators/generate-luks2-metadata-size-2m.img.sh
++++ b/tests/generators/generate-luks2-metadata-size-2m.img.sh
+@@ -27,7 +27,7 @@ generate()
+ 	JSON_SIZE=$((TEST_JSN_SIZE*512))
+ 	DATA_OFFSET=16777216
+ 
+-	json_str=$(jq -c --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
++	json_str=$(_jq --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
+ 		   '.keyslots[].area.offset |= ( . | tonumber + ($jdiff | tonumber) | tostring) |
+ 		    .config.json_size = $jsize |
+ 		    .segments."0".offset = $off' $TMPDIR/json0)
+@@ -49,7 +49,7 @@ check()
+ 	lib_hdr1_killed $TEST_MDA_SIZE || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0 $TEST_JSN_SIZE
+-	jq -c --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
++	_jq --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
+ 		'if ([.keyslots[].area.offset] | map(tonumber) | min | tostring != $koff) or
+ 		    (.config.json_size != $jsize)
+ 		then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+diff --git a/tests/generators/generate-luks2-metadata-size-32k-secondary.img.sh b/tests/generators/generate-luks2-metadata-size-32k-secondary.img.sh
+index fe95d3a3..4520cf89 100755
+--- a/tests/generators/generate-luks2-metadata-size-32k-secondary.img.sh
++++ b/tests/generators/generate-luks2-metadata-size-32k-secondary.img.sh
+@@ -28,7 +28,7 @@ generate()
+ 	JSON_SIZE=$((TEST_JSN_SIZE*512))
+ 	DATA_OFFSET=16777216
+ 
+-	json_str=$(jq -c --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
++	json_str=$(_jq --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
+ 		   '.keyslots[].area.offset |= ( . | tonumber + ($jdiff | tonumber) | tostring) |
+ 		    .config.json_size = $jsize |
+ 		    .segments."0".offset = $off' $TMPDIR/json0)
+@@ -52,7 +52,7 @@ check()
+ 	lib_hdr0_killed $TEST_MDA_SIZE || exit 2
+ 
+ 	read_luks2_json1 $TGT_IMG $TMPDIR/json_res1 $TEST_JSN_SIZE
+-	jq -c --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
++	_jq --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
+ 		'if ([.keyslots[].area.offset] | map(tonumber) | min | tostring != $koff) or
+ 		    (.config.json_size != $jsize)
+ 		then error("Unexpected value in result json") else empty end' $TMPDIR/json_res1 || exit 5
+diff --git a/tests/generators/generate-luks2-metadata-size-32k.img.sh b/tests/generators/generate-luks2-metadata-size-32k.img.sh
+index f862e4f2..a7d13b66 100755
+--- a/tests/generators/generate-luks2-metadata-size-32k.img.sh
++++ b/tests/generators/generate-luks2-metadata-size-32k.img.sh
+@@ -27,7 +27,7 @@ generate()
+ 	JSON_SIZE=$((TEST_JSN_SIZE*512))
+ 	DATA_OFFSET=16777216
+ 
+-	json_str=$(jq -c --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
++	json_str=$(_jq --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
+ 		   '.keyslots[].area.offset |= ( . | tonumber + ($jdiff | tonumber) | tostring) |
+ 		    .config.json_size = $jsize |
+ 		    .segments."0".offset = $off' $TMPDIR/json0)
+@@ -49,7 +49,7 @@ check()
+ 	lib_hdr1_killed $TEST_MDA_SIZE || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0 $TEST_JSN_SIZE
+-	jq -c --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
++	_jq --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
+ 		'if ([.keyslots[].area.offset] | map(tonumber) | min | tostring != $koff) or
+ 		    (.config.json_size != $jsize)
+ 		then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+diff --git a/tests/generators/generate-luks2-metadata-size-4m-secondary.img.sh b/tests/generators/generate-luks2-metadata-size-4m-secondary.img.sh
+index 837aab67..3fc6a212 100755
+--- a/tests/generators/generate-luks2-metadata-size-4m-secondary.img.sh
++++ b/tests/generators/generate-luks2-metadata-size-4m-secondary.img.sh
+@@ -27,7 +27,7 @@ generate()
+ 	JSON_SIZE=$((TEST_JSN_SIZE*512))
+ 	DATA_OFFSET=16777216
+ 
+-	json_str=$(jq -c --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
++	json_str=$(_jq --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
+ 		   '.keyslots[].area.offset |= ( . | tonumber + ($jdiff | tonumber) | tostring) |
+ 		    .config.json_size = $jsize |
+ 		    .segments."0".offset = $off' $TMPDIR/json0)
+@@ -51,7 +51,7 @@ check()
+ 	lib_hdr0_killed $TEST_MDA_SIZE || exit 2
+ 
+ 	read_luks2_json1 $TGT_IMG $TMPDIR/json_res1 $TEST_JSN_SIZE
+-	jq -c --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
++	_jq --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
+ 		'if ([.keyslots[].area.offset] | map(tonumber) | min | tostring != $koff) or
+ 		    (.config.json_size != $jsize)
+ 		then error("Unexpected value in result json") else empty end' $TMPDIR/json_res1 || exit 5
+diff --git a/tests/generators/generate-luks2-metadata-size-4m.img.sh b/tests/generators/generate-luks2-metadata-size-4m.img.sh
+index 55ce0b28..77658206 100755
+--- a/tests/generators/generate-luks2-metadata-size-4m.img.sh
++++ b/tests/generators/generate-luks2-metadata-size-4m.img.sh
+@@ -27,7 +27,7 @@ generate()
+ 	JSON_SIZE=$((TEST_JSN_SIZE*512))
+ 	DATA_OFFSET=16777216
+ 
+-	json_str=$(jq -c --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
++	json_str=$(_jq --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
+ 		   '.keyslots[].area.offset |= ( . | tonumber + ($jdiff | tonumber) | tostring) |
+ 		    .config.json_size = $jsize |
+ 		    .segments."0".offset = $off' $TMPDIR/json0)
+@@ -49,7 +49,7 @@ check()
+ 	lib_hdr1_killed $TEST_MDA_SIZE || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0 $TEST_JSN_SIZE
+-	jq -c --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
++	_jq --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
+ 		'if ([.keyslots[].area.offset] | map(tonumber) | min | tostring != $koff) or
+ 		    (.config.json_size != $jsize)
+ 		then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+diff --git a/tests/generators/generate-luks2-metadata-size-512k-secondary.img.sh b/tests/generators/generate-luks2-metadata-size-512k-secondary.img.sh
+index 8a46817e..00825ca9 100755
+--- a/tests/generators/generate-luks2-metadata-size-512k-secondary.img.sh
++++ b/tests/generators/generate-luks2-metadata-size-512k-secondary.img.sh
+@@ -28,7 +28,7 @@ generate()
+ 	JSON_SIZE=$((TEST_JSN_SIZE*512))
+ 	DATA_OFFSET=16777216
+ 
+-	json_str=$(jq -c --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
++	json_str=$(_jq --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
+ 		   '.keyslots[].area.offset |= ( . | tonumber + ($jdiff | tonumber) | tostring) |
+ 		    .config.json_size = $jsize |
+ 		    .segments."0".offset = $off' $TMPDIR/json0)
+@@ -52,7 +52,7 @@ check()
+ 	lib_hdr0_killed $TEST_MDA_SIZE || exit 2
+ 
+ 	read_luks2_json1 $TGT_IMG $TMPDIR/json_res1 $TEST_JSN_SIZE
+-	jq -c --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
++	_jq --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
+ 		'if ([.keyslots[].area.offset] | map(tonumber) | min | tostring != $koff) or
+ 		    (.config.json_size != $jsize)
+ 		then error("Unexpected value in result json") else empty end' $TMPDIR/json_res1 || exit 5
+diff --git a/tests/generators/generate-luks2-metadata-size-512k.img.sh b/tests/generators/generate-luks2-metadata-size-512k.img.sh
+index a9a002e4..3baf23f6 100755
+--- a/tests/generators/generate-luks2-metadata-size-512k.img.sh
++++ b/tests/generators/generate-luks2-metadata-size-512k.img.sh
+@@ -27,7 +27,7 @@ generate()
+ 	JSON_SIZE=$((TEST_JSN_SIZE*512))
+ 	DATA_OFFSET=16777216
+ 
+-	json_str=$(jq -c --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
++	json_str=$(_jq --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
+ 		   '.keyslots[].area.offset |= ( . | tonumber + ($jdiff | tonumber) | tostring) |
+ 		    .config.json_size = $jsize |
+ 		    .segments."0".offset = $off' $TMPDIR/json0)
+@@ -49,7 +49,7 @@ check()
+ 	lib_hdr1_killed $TEST_MDA_SIZE || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0 $TEST_JSN_SIZE
+-	jq -c --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
++	_jq --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
+ 		'if ([.keyslots[].area.offset] | map(tonumber) | min | tostring != $koff) or
+ 		    (.config.json_size != $jsize)
+ 		then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+diff --git a/tests/generators/generate-luks2-metadata-size-64k-inv-area-c0.img.sh b/tests/generators/generate-luks2-metadata-size-64k-inv-area-c0.img.sh
+index 6b3a906f..176de912 100755
+--- a/tests/generators/generate-luks2-metadata-size-64k-inv-area-c0.img.sh
++++ b/tests/generators/generate-luks2-metadata-size-64k-inv-area-c0.img.sh
+@@ -27,7 +27,7 @@ generate()
+ 	JSON_SIZE=$((TEST_JSN_SIZE*512))
+ 	DATA_OFFSET=16777216
+ 
+-	json_str=$(jq -c --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
++	json_str=$(_jq --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
+ 		   '.keyslots[].area.offset |= ( . | tonumber + ($jdiff | tonumber) | tostring) |
+ 		    .config.json_size = $jsize |
+ 		    .segments."0".offset = $off' $TMPDIR/json0)
+@@ -49,7 +49,7 @@ check()
+ 	lib_hdr1_killed $TEST_MDA_SIZE || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0 $TEST_JSN_SIZE
+-	jq -c --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
++	_jq --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
+ 		'if ([.keyslots[].area.offset] | map(tonumber) | min | tostring != $koff) or
+ 		    (.config.json_size != $jsize)
+ 		then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+diff --git a/tests/generators/generate-luks2-metadata-size-64k-inv-area-c1.img.sh b/tests/generators/generate-luks2-metadata-size-64k-inv-area-c1.img.sh
+index 02eb7de4..2e969638 100755
+--- a/tests/generators/generate-luks2-metadata-size-64k-inv-area-c1.img.sh
++++ b/tests/generators/generate-luks2-metadata-size-64k-inv-area-c1.img.sh
+@@ -26,7 +26,7 @@ generate()
+ 	JSON_SIZE=$((TEST_JSN_SIZE*512))
+ 	DATA_OFFSET=16777216
+ 
+-	json_str=$(jq -c --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
++	json_str=$(_jq --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
+ 			 --arg mda $((2*TEST_MDA_SIZE_BYTES)) \
+ 		   '.keyslots[].area.offset |= ( . | tonumber + ($jdiff | tonumber) | tostring) |
+ 		    .keyslots."7".area.offset = ( ((.config.keyslots_size | tonumber) + ($mda | tonumber) - (.keyslots."7".area.size | tonumber) + 1) | tostring ) |
+@@ -51,7 +51,7 @@ check()
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0 $TEST_JSN_SIZE
+ # .keyslots.7.area.offset = ( ((.config.keyslots_size | tonumber) + ($mda | tonumber) - (.keyslots.7.area.size | tonumber) + 1) | tostring ) |
+-	jq -c --arg mda $((2*TEST_MDA_SIZE_BYTES)) --arg jsize $JSON_SIZE \
++	_jq --arg mda $((2*TEST_MDA_SIZE_BYTES)) --arg jsize $JSON_SIZE \
+ 		'if (.keyslots."7".area.offset != ( ((.config.keyslots_size | tonumber) + ($mda | tonumber) - (.keyslots."7".area.size | tonumber) + 1) | tostring )) or
+ 		    (.config.json_size != $jsize)
+ 		then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+diff --git a/tests/generators/generate-luks2-metadata-size-64k-inv-keyslots-size-c0.img.sh b/tests/generators/generate-luks2-metadata-size-64k-inv-keyslots-size-c0.img.sh
+index 44872965..0076332e 100755
+--- a/tests/generators/generate-luks2-metadata-size-64k-inv-keyslots-size-c0.img.sh
++++ b/tests/generators/generate-luks2-metadata-size-64k-inv-keyslots-size-c0.img.sh
+@@ -26,7 +26,7 @@ generate()
+ 	JSON_SIZE=$((TEST_JSN_SIZE*512))
+ 	DATA_OFFSET=16777216
+ 
+-	json_str=$(jq -c --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
++	json_str=$(_jq --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
+ 			 --arg mda $((2*TEST_MDA_SIZE_BYTES)) \
+ 		   '.keyslots[].area.offset |= ( . | tonumber + ($jdiff | tonumber) | tostring) |
+ 		    .config.json_size = $jsize |
+@@ -50,7 +50,7 @@ check()
+ 	lib_hdr1_killed $TEST_MDA_SIZE || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0 $TEST_JSN_SIZE
+-	jq -c --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE --arg off $DATA_OFFSET --arg mda $((2*TEST_MDA_SIZE_BYTES)) \
++	_jq --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE --arg off $DATA_OFFSET --arg mda $((2*TEST_MDA_SIZE_BYTES)) \
+ 		'if ([.keyslots[].area.offset] | map(tonumber) | min | tostring != $koff) or
+ 		    (.config.json_size != $jsize) or
+ 		    (.config.keyslots_size != (((($off | tonumber) - ($mda | tonumber) + 4096)) | tostring ))
+diff --git a/tests/generators/generate-luks2-metadata-size-64k-secondary.img.sh b/tests/generators/generate-luks2-metadata-size-64k-secondary.img.sh
+index a2ee1ace..b28b0f34 100755
+--- a/tests/generators/generate-luks2-metadata-size-64k-secondary.img.sh
++++ b/tests/generators/generate-luks2-metadata-size-64k-secondary.img.sh
+@@ -28,7 +28,7 @@ generate()
+ 	JSON_SIZE=$((TEST_JSN_SIZE*512))
+ 	DATA_OFFSET=16777216
+ 
+-	json_str=$(jq -c --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
++	json_str=$(_jq --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
+ 		   '.keyslots[].area.offset |= ( . | tonumber + ($jdiff | tonumber) | tostring) |
+ 		    .config.json_size = $jsize |
+ 		    .segments."0".offset = $off' $TMPDIR/json0)
+@@ -52,7 +52,7 @@ check()
+ 	lib_hdr0_killed $TEST_MDA_SIZE || exit 2
+ 
+ 	read_luks2_json1 $TGT_IMG $TMPDIR/json_res1 $TEST_JSN_SIZE
+-	jq -c --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
++	_jq --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
+ 		'if ([.keyslots[].area.offset] | map(tonumber) | min | tostring != $koff) or
+ 		    (.config.json_size != $jsize)
+ 		then error("Unexpected value in result json") else empty end' $TMPDIR/json_res1 || exit 5
+diff --git a/tests/generators/generate-luks2-metadata-size-64k.img.sh b/tests/generators/generate-luks2-metadata-size-64k.img.sh
+index 98285acb..22ed5c1c 100755
+--- a/tests/generators/generate-luks2-metadata-size-64k.img.sh
++++ b/tests/generators/generate-luks2-metadata-size-64k.img.sh
+@@ -27,7 +27,7 @@ generate()
+ 	JSON_SIZE=$((TEST_JSN_SIZE*512))
+ 	DATA_OFFSET=16777216
+ 
+-	json_str=$(jq -c --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
++	json_str=$(_jq --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
+ 		   '.keyslots[].area.offset |= ( . | tonumber + ($jdiff | tonumber) | tostring) |
+ 		    .config.json_size = $jsize |
+ 		    .segments."0".offset = $off' $TMPDIR/json0)
+@@ -49,7 +49,7 @@ check()
+ 	lib_hdr1_killed $TEST_MDA_SIZE || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0 $TEST_JSN_SIZE
+-	jq -c --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
++	_jq --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
+ 		'if ([.keyslots[].area.offset] | map(tonumber) | min | tostring != $koff) or
+ 		    (.config.json_size != $jsize)
+ 		then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+diff --git a/tests/generators/generate-luks2-metadata-size-invalid-secondary.img.sh b/tests/generators/generate-luks2-metadata-size-invalid-secondary.img.sh
+index 7eb41b55..22e4d649 100755
+--- a/tests/generators/generate-luks2-metadata-size-invalid-secondary.img.sh
++++ b/tests/generators/generate-luks2-metadata-size-invalid-secondary.img.sh
+@@ -27,7 +27,7 @@ generate()
+ 	JSON_SIZE=$((TEST_JSN_SIZE*512))
+ 	DATA_OFFSET=16777216
+ 
+-	json_str=$(jq -c --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
++	json_str=$(_jq --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
+ 		   '.keyslots[].area.offset |= ( . | tonumber + ($jdiff | tonumber) | tostring) |
+ 		    .config.json_size = $jsize |
+ 		    .segments."0".offset = $off' $TMPDIR/json0)
+@@ -51,7 +51,7 @@ check()
+ 	lib_hdr0_killed $TEST_MDA_SIZE || exit 2
+ 
+ 	read_luks2_json1 $TGT_IMG $TMPDIR/json_res1 $TEST_JSN_SIZE
+-	jq -c --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
++	_jq --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
+ 		'if ([.keyslots[].area.offset] | map(tonumber) | min | tostring != $koff) or
+ 		    (.config.json_size != $jsize)
+ 		then error("Unexpected value in result json") else empty end' $TMPDIR/json_res1 || exit 5
+diff --git a/tests/generators/generate-luks2-metadata-size-invalid.img.sh b/tests/generators/generate-luks2-metadata-size-invalid.img.sh
+index 24113a1f..3440826a 100755
+--- a/tests/generators/generate-luks2-metadata-size-invalid.img.sh
++++ b/tests/generators/generate-luks2-metadata-size-invalid.img.sh
+@@ -27,7 +27,7 @@ generate()
+ 	JSON_SIZE=$((TEST_JSN_SIZE*512))
+ 	DATA_OFFSET=16777216
+ 
+-	json_str=$(jq -c --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
++	json_str=$(_jq --arg jdiff $JSON_DIFF --arg jsize $JSON_SIZE --arg off $DATA_OFFSET \
+ 		   '.keyslots[].area.offset |= ( . | tonumber + ($jdiff | tonumber) | tostring) |
+ 		    .config.json_size = $jsize |
+ 		    .segments."0".offset = $off' $TMPDIR/json0)
+@@ -49,7 +49,7 @@ check()
+ 	lib_hdr1_killed $TEST_MDA_SIZE || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0 $TEST_JSN_SIZE
+-	jq -c --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
++	_jq --arg koff $KEYSLOTS_OFFSET --arg jsize $JSON_SIZE \
+ 		'if ([.keyslots[].area.offset] | map(tonumber) | min | tostring != $koff) or
+ 		    (.config.json_size != $jsize)
+ 		then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+diff --git a/tests/generators/generate-luks2-missing-keyslot-referenced-in-digest.img.sh b/tests/generators/generate-luks2-missing-keyslot-referenced-in-digest.img.sh
+index ae364ea5..f82c7018 100755
+--- a/tests/generators/generate-luks2-missing-keyslot-referenced-in-digest.img.sh
++++ b/tests/generators/generate-luks2-missing-keyslot-referenced-in-digest.img.sh
+@@ -17,9 +17,9 @@
+ generate()
+ {
+ 	read -r json_str_orig < $TMPDIR/json0
+-	arr_len=$(jq -c -M '.digests."0".keyslots | length' $TMPDIR/json0)
++	arr_len=$(_jq -M '.digests."0".keyslots | length' $TMPDIR/json0)
+ 	# add missing keyslot reference in keyslots array of digest '0'
+-	json_str=$(jq -r -c -M 'def arr: ["digests", "0", "keyslots"];
++	json_str=$(_jq -r -M 'def arr: ["digests", "0", "keyslots"];
+ 	       def missks: getpath(["keyslots"]) | keys | max | tonumber + 1 | tostring;
+ 	       setpath(arr; getpath(arr) + [ missks ])' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+@@ -35,7 +35,7 @@ check()
+ 	lib_hdr0_checksum || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	new_arr_len=$(jq -c -M '.digests."0".keyslots | length' $TMPDIR/json_res0)
++	new_arr_len=$(_jq -M '.digests."0".keyslots | length' $TMPDIR/json_res0)
+ 	test $((arr_len+1)) -eq $new_arr_len || exit 2
+ }
+ 
+diff --git a/tests/generators/generate-luks2-missing-keyslot-referenced-in-token.img.sh b/tests/generators/generate-luks2-missing-keyslot-referenced-in-token.img.sh
+index e5da89ce..e75c0fda 100755
+--- a/tests/generators/generate-luks2-missing-keyslot-referenced-in-token.img.sh
++++ b/tests/generators/generate-luks2-missing-keyslot-referenced-in-token.img.sh
+@@ -18,7 +18,7 @@ generate()
+ {
+ 	read -r json_str_orig < $TMPDIR/json0
+ 	# add missing keyslot reference in keyslots array of token '0'
+-	json_str=$(jq -r -c -M 'def missks: getpath(["keyslots"]) | keys | max | tonumber + 1 | tostring;
++	json_str=$(_jq -r -M 'def missks: getpath(["keyslots"]) | keys | max | tonumber + 1 | tostring;
+ 	      .tokens += {"0":{"type":"dummy","keyslots":[ "0", missks ]}}' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+@@ -33,7 +33,7 @@ check()
+ 	lib_hdr0_checksum || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	new_arr_len=$(jq -c -M '.tokens."0".keyslots | length' $TMPDIR/json_res0)
++	new_arr_len=$(_jq -M '.tokens."0".keyslots | length' $TMPDIR/json_res0)
+ 	test $new_arr_len -eq 2 || exit 2
+ }
+ 
+diff --git a/tests/generators/generate-luks2-missing-segment-referenced-in-digest.img.sh b/tests/generators/generate-luks2-missing-segment-referenced-in-digest.img.sh
+index 0cbb3bc0..5d7c9f6f 100755
+--- a/tests/generators/generate-luks2-missing-segment-referenced-in-digest.img.sh
++++ b/tests/generators/generate-luks2-missing-segment-referenced-in-digest.img.sh
+@@ -17,9 +17,9 @@
+ generate()
+ {
+ 	read -r json_str_orig < $TMPDIR/json0
+-	arr_len=$(jq -c -M '.digests."0".segments | length' $TMPDIR/json0)
++	arr_len=$(_jq -M '.digests."0".segments | length' $TMPDIR/json0)
+ 	# add missing keyslot reference in keyslots array of digest '0'
+-	json_str=$(jq -c 'def arr: ["digests", "0", "segments"];
++	json_str=$(_jq 'def arr: ["digests", "0", "segments"];
+ 	       def missseg: getpath(["segments"]) | keys | max | tonumber + 1 | tostring;
+ 	       setpath(arr; getpath(arr) + [ missseg ])' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+@@ -35,7 +35,7 @@ check()
+ 	lib_hdr0_checksum || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	new_arr_len=$(jq -c -M '.digests."0".segments | length' $TMPDIR/json_res0)
++	new_arr_len=$(_jq -M '.digests."0".segments | length' $TMPDIR/json_res0)
+ 	test $((arr_len+1)) -eq $new_arr_len || exit 2
+ }
+ 
+diff --git a/tests/generators/generate-luks2-non-compact-json-4k-token-0.img.sh b/tests/generators/generate-luks2-non-compact-json-4k-token-0.img.sh
+index abbaf5a7..6fcd7dde 100755
+--- a/tests/generators/generate-luks2-non-compact-json-4k-token-0.img.sh
++++ b/tests/generators/generate-luks2-non-compact-json-4k-token-0.img.sh
+@@ -19,7 +19,7 @@
+ generate()
+ {
+ 	# add empty token
+-	json_str=$(jq -c '.tokens."0" = {"type":"a", "keyslots":[]}' $TMPDIR/json0)
++	json_str=$(_jq '.tokens."0" = {"type":"a", "keyslots":[]}' $TMPDIR/json0)
+ 	json_len_orig=${#json_str}
+ 	test $json_len_orig -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+diff --git a/tests/generators/generate-luks2-non-compact-json-token-0.img.sh b/tests/generators/generate-luks2-non-compact-json-token-0.img.sh
+index e5f5208a..bb355a11 100755
+--- a/tests/generators/generate-luks2-non-compact-json-token-0.img.sh
++++ b/tests/generators/generate-luks2-non-compact-json-token-0.img.sh
+@@ -18,7 +18,7 @@
+ generate()
+ {
+ 	# add empty token
+-	json_str=$(jq -c '.tokens."0" = {"type":"a", "keyslots":[]}' $TMPDIR/json0)
++	json_str=$(_jq '.tokens."0" = {"type":"a", "keyslots":[]}' $TMPDIR/json0)
+ 	json_len_orig=${#json_str}
+ 	test $json_len_orig -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+diff --git a/tests/generators/generate-luks2-overlapping-areas-c0-json0.img.sh b/tests/generators/generate-luks2-overlapping-areas-c0-json0.img.sh
+index 60cd23ea..858c639f 100755
+--- a/tests/generators/generate-luks2-overlapping-areas-c0-json0.img.sh
++++ b/tests/generators/generate-luks2-overlapping-areas-c0-json0.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# copy area 6 offset and length into area 7
+-	json_str=$(jq -c '.keyslots."7".area.offset = .keyslots."6".area.offset |
++	json_str=$(_jq '.keyslots."7".area.offset = .keyslots."6".area.offset |
+ 	       .keyslots."7".area.size = .keyslots."6".area.size' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+@@ -30,7 +30,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if (.keyslots."6".area.offset != .keyslots."7".area.offset) or (.keyslots."6".area.size != .keyslots."7".area.size)
++	_jq 'if (.keyslots."6".area.offset != .keyslots."7".area.offset) or (.keyslots."6".area.size != .keyslots."7".area.size)
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-overlapping-areas-c1-json0.img.sh b/tests/generators/generate-luks2-overlapping-areas-c1-json0.img.sh
+index 19ca941f..b0a302b4 100755
+--- a/tests/generators/generate-luks2-overlapping-areas-c1-json0.img.sh
++++ b/tests/generators/generate-luks2-overlapping-areas-c1-json0.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# make area 7 being included in area 6
+-	json_str=$(jq -c '.keyslots."7".area.offset = (.keyslots."6".area.offset | tonumber + 1 | tostring ) |
++	json_str=$(_jq '.keyslots."7".area.offset = (.keyslots."6".area.offset | tonumber + 1 | tostring ) |
+ 	       .keyslots."7".area.size = ( .keyslots."6".area.size | tonumber - 1 | tostring)' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+@@ -30,7 +30,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if (.keyslots."7".area.offset != (.keyslots."6".area.offset | tonumber + 1 | tostring)) or
++	_jq 'if (.keyslots."7".area.offset != (.keyslots."6".area.offset | tonumber + 1 | tostring)) or
+ 		  (.keyslots."7".area.size != (.keyslots."6".area.size | tonumber - 1 | tostring)) or
+ 		  (.keyslots."7".area.size | tonumber <= 0)
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+diff --git a/tests/generators/generate-luks2-overlapping-areas-c2-json0.img.sh b/tests/generators/generate-luks2-overlapping-areas-c2-json0.img.sh
+index cd62a730..5646fdd6 100755
+--- a/tests/generators/generate-luks2-overlapping-areas-c2-json0.img.sh
++++ b/tests/generators/generate-luks2-overlapping-areas-c2-json0.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# make area 7 being included in area 6
+-	json_str=$(jq -c '.keyslots."7".area.offset = ([ .keyslots."6".area.offset, .keyslots."6".area.size ] | map(tonumber) | add - 1 | tostring)' $TMPDIR/json0)
++	json_str=$(_jq '.keyslots."7".area.offset = ([ .keyslots."6".area.offset, .keyslots."6".area.size ] | map(tonumber) | add - 1 | tostring)' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .keyslots."7".area.offset != ([.keyslots."6".area.offset, .keyslots."6".area.size ] | map(tonumber) | add - 1 | tostring)
++	_jq 'if .keyslots."7".area.offset != ([.keyslots."6".area.offset, .keyslots."6".area.size ] | map(tonumber) | add - 1 | tostring)
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-pbkdf2-leftover-params-0.img.sh b/tests/generators/generate-luks2-pbkdf2-leftover-params-0.img.sh
+index 296d18bf..cc4e54c9 100755
+--- a/tests/generators/generate-luks2-pbkdf2-leftover-params-0.img.sh
++++ b/tests/generators/generate-luks2-pbkdf2-leftover-params-0.img.sh
+@@ -17,8 +17,8 @@
+ generate()
+ {
+ 	# add keyslot 1 to second digest
+-	obj_len=$(jq -c -M '.keyslots."2".kdf | length' $TMPDIR/json0)
+-	json_str=$(jq -r -c -M '.keyslots."2".kdf.type = "argon2i" | .keyslots."2".kdf.iterations = 1001 | .keyslots."2".kdf.hash = "sha256"' $TMPDIR/json0)
++	obj_len=$(_jq -M '.keyslots."2".kdf | length' $TMPDIR/json0)
++	json_str=$(_jq -r -M '.keyslots."2".kdf.type = "argon2i" | .keyslots."2".kdf.iterations = 1001 | .keyslots."2".kdf.hash = "sha256"' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -32,7 +32,7 @@ check()
+ 	lib_hdr0_checksum || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	new_obj_len=$(jq -c -M '.keyslots."2".kdf | length' $TMPDIR/json_res0)
++	new_obj_len=$(_jq -M '.keyslots."2".kdf | length' $TMPDIR/json_res0)
+ 	test $((obj_len+2)) -eq $new_obj_len || exit 2
+ }
+ 
+diff --git a/tests/generators/generate-luks2-pbkdf2-leftover-params-1.img.sh b/tests/generators/generate-luks2-pbkdf2-leftover-params-1.img.sh
+index 4e4f5bd4..ca56eada 100755
+--- a/tests/generators/generate-luks2-pbkdf2-leftover-params-1.img.sh
++++ b/tests/generators/generate-luks2-pbkdf2-leftover-params-1.img.sh
+@@ -17,8 +17,8 @@
+ generate()
+ {
+ 	# add keyslot 1 to second digest
+-	obj_len=$(jq -c -M '.keyslots."2".kdf | length' $TMPDIR/json0)
+-	json_str=$(jq -r -c -M '.keyslots."2".kdf.type = "argon2id" | .keyslots."2".kdf.iterations = 1001 | .keyslots."2".kdf.hash = "sha256"' $TMPDIR/json0)
++	obj_len=$(_jq -M '.keyslots."2".kdf | length' $TMPDIR/json0)
++	json_str=$(_jq -r -M '.keyslots."2".kdf.type = "argon2id" | .keyslots."2".kdf.iterations = 1001 | .keyslots."2".kdf.hash = "sha256"' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -32,7 +32,7 @@ check()
+ 	lib_hdr0_checksum || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	new_obj_len=$(jq -c -M '.keyslots."2".kdf | length' $TMPDIR/json_res0)
++	new_obj_len=$(_jq -M '.keyslots."2".kdf | length' $TMPDIR/json_res0)
+ 	test $((obj_len+2)) -eq $new_obj_len || exit 2
+ }
+ 
+diff --git a/tests/generators/generate-luks2-segment-crypt-empty-encryption.img.sh b/tests/generators/generate-luks2-segment-crypt-empty-encryption.img.sh
+index 4e1aa9bd..bd43a36b 100755
+--- a/tests/generators/generate-luks2-segment-crypt-empty-encryption.img.sh
++++ b/tests/generators/generate-luks2-segment-crypt-empty-encryption.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# remove mandatory encryption field
+-	json_str=$(jq -c '.segments."0".encryption = ""' $TMPDIR/json0)
++	json_str=$(_jq '.segments."0".encryption = ""' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."0".encryption != ""
++	_jq 'if .segments."0".encryption != ""
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-segment-crypt-missing-encryption.img.sh b/tests/generators/generate-luks2-segment-crypt-missing-encryption.img.sh
+index cdd62168..2230429b 100755
+--- a/tests/generators/generate-luks2-segment-crypt-missing-encryption.img.sh
++++ b/tests/generators/generate-luks2-segment-crypt-missing-encryption.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# remove mandatory encryption field
+-	json_str=$(jq -c 'del(.segments."0".encryption)' $TMPDIR/json0)
++	json_str=$(_jq 'del(.segments."0".encryption)' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."0".encryption
++	_jq 'if .segments."0".encryption
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-segment-crypt-missing-ivoffset.img.sh b/tests/generators/generate-luks2-segment-crypt-missing-ivoffset.img.sh
+index 8c86ad5f..9fa9a87b 100755
+--- a/tests/generators/generate-luks2-segment-crypt-missing-ivoffset.img.sh
++++ b/tests/generators/generate-luks2-segment-crypt-missing-ivoffset.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# remove mandatory encryption field
+-	json_str=$(jq -c 'del(.segments."0".iv_tweak)' $TMPDIR/json0)
++	json_str=$(_jq 'del(.segments."0".iv_tweak)' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."0".iv_tweak
++	_jq 'if .segments."0".iv_tweak
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-segment-crypt-missing-sectorsize.img.sh b/tests/generators/generate-luks2-segment-crypt-missing-sectorsize.img.sh
+index ab0b8ec9..c3d84949 100755
+--- a/tests/generators/generate-luks2-segment-crypt-missing-sectorsize.img.sh
++++ b/tests/generators/generate-luks2-segment-crypt-missing-sectorsize.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# remove mandatory encryption field
+-	json_str=$(jq -c 'del(.segments."0".sector_size)' $TMPDIR/json0)
++	json_str=$(_jq 'del(.segments."0".sector_size)' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."0".sector_size
++	_jq 'if .segments."0".sector_size
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-segment-crypt-wrong-encryption.img.sh b/tests/generators/generate-luks2-segment-crypt-wrong-encryption.img.sh
+index a9bac8dd..27921883 100755
+--- a/tests/generators/generate-luks2-segment-crypt-wrong-encryption.img.sh
++++ b/tests/generators/generate-luks2-segment-crypt-wrong-encryption.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# remove mandatory encryption field
+-	json_str=$(jq -c '.segments."0".encryption = {}' $TMPDIR/json0)
++	json_str=$(_jq '.segments."0".encryption = {}' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."0".encryption | type != "object"
++	_jq 'if .segments."0".encryption | type != "object"
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-segment-crypt-wrong-ivoffset.img.sh b/tests/generators/generate-luks2-segment-crypt-wrong-ivoffset.img.sh
+index 6611c324..ceb5ef26 100755
+--- a/tests/generators/generate-luks2-segment-crypt-wrong-ivoffset.img.sh
++++ b/tests/generators/generate-luks2-segment-crypt-wrong-ivoffset.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# remove mandatory encryption field
+-	json_str=$(jq -c '.segments."0".iv_tweak = "dynamic"' $TMPDIR/json0)
++	json_str=$(_jq '.segments."0".iv_tweak = "dynamic"' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."0".iv_tweak != "dynamic"
++	_jq 'if .segments."0".iv_tweak != "dynamic"
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-segment-crypt-wrong-sectorsize-0.img.sh b/tests/generators/generate-luks2-segment-crypt-wrong-sectorsize-0.img.sh
+index d0d14496..419c9726 100755
+--- a/tests/generators/generate-luks2-segment-crypt-wrong-sectorsize-0.img.sh
++++ b/tests/generators/generate-luks2-segment-crypt-wrong-sectorsize-0.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# remove mandatory encryption field
+-	json_str=$(jq -c '.segments."0".sector_size = 1023' $TMPDIR/json0)
++	json_str=$(_jq '.segments."0".sector_size = 1023' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."0".sector_size != 1023
++	_jq 'if .segments."0".sector_size != 1023
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-segment-crypt-wrong-sectorsize-1.img.sh b/tests/generators/generate-luks2-segment-crypt-wrong-sectorsize-1.img.sh
+index d7fabe46..128b73d2 100755
+--- a/tests/generators/generate-luks2-segment-crypt-wrong-sectorsize-1.img.sh
++++ b/tests/generators/generate-luks2-segment-crypt-wrong-sectorsize-1.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# remove mandatory encryption field
+-	json_str=$(jq -c '.segments."0".sector_size = "4096"' $TMPDIR/json0)
++	json_str=$(_jq '.segments."0".sector_size = "4096"' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."0".sector_size != "4096"
++	_jq 'if .segments."0".sector_size != "4096"
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-segment-crypt-wrong-sectorsize-2.img.sh b/tests/generators/generate-luks2-segment-crypt-wrong-sectorsize-2.img.sh
+index 14dd258e..67e4b2d4 100755
+--- a/tests/generators/generate-luks2-segment-crypt-wrong-sectorsize-2.img.sh
++++ b/tests/generators/generate-luks2-segment-crypt-wrong-sectorsize-2.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# remove mandatory encryption field
+-	json_str=$(jq -c '.segments."0".sector_size = -1024' $TMPDIR/json0)
++	json_str=$(_jq '.segments."0".sector_size = -1024' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."0".sector_size != -1024
++	_jq 'if .segments."0".sector_size != -1024
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-segment-missing-offset.img.sh b/tests/generators/generate-luks2-segment-missing-offset.img.sh
+index 66562be6..b9815299 100755
+--- a/tests/generators/generate-luks2-segment-missing-offset.img.sh
++++ b/tests/generators/generate-luks2-segment-missing-offset.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# remove mandatory encryption field
+-	json_str=$(jq -c 'del(.segments."0".offset)' $TMPDIR/json0)
++	json_str=$(_jq 'del(.segments."0".offset)' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."0".offset
++	_jq 'if .segments."0".offset
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-segment-missing-size.img.sh b/tests/generators/generate-luks2-segment-missing-size.img.sh
+index ccfc2dc3..7b05ece0 100755
+--- a/tests/generators/generate-luks2-segment-missing-size.img.sh
++++ b/tests/generators/generate-luks2-segment-missing-size.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# remove mandatory encryption field
+-	json_str=$(jq -c 'del(.segments."0".size)' $TMPDIR/json0)
++	json_str=$(_jq 'del(.segments."0".size)' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."0".size
++	_jq 'if .segments."0".size
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-segment-missing-type.img.sh b/tests/generators/generate-luks2-segment-missing-type.img.sh
+index 5cb0cf5c..4bb133b9 100755
+--- a/tests/generators/generate-luks2-segment-missing-type.img.sh
++++ b/tests/generators/generate-luks2-segment-missing-type.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# remove mandatory encryption field
+-	json_str=$(jq -c 'del(.segments."0".type)' $TMPDIR/json0)
++	json_str=$(_jq 'del(.segments."0".type)' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."0".type
++	_jq 'if .segments."0".type
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-segment-two.img.sh b/tests/generators/generate-luks2-segment-two.img.sh
+index 1ec04706..fff4628c 100755
+--- a/tests/generators/generate-luks2-segment-two.img.sh
++++ b/tests/generators/generate-luks2-segment-two.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# remove mandatory encryption field
+-	json_str=$(jq -c '.segments."0".size = "512" | .segments."1" = {type:"some", offset: (.segments."0".offset | tonumber + 512 | tostring), size: "dynamic"}' $TMPDIR/json0)
++	json_str=$(_jq '.segments."0".size = "512" | .segments."1" = {type:"some", offset: (.segments."0".offset | tonumber + 512 | tostring), size: "dynamic"}' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."1" | type != "object"
++	_jq 'if .segments."1" | type != "object"
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-segment-unknown-type.img.sh b/tests/generators/generate-luks2-segment-unknown-type.img.sh
+index 653f4bda..e283b88d 100755
+--- a/tests/generators/generate-luks2-segment-unknown-type.img.sh
++++ b/tests/generators/generate-luks2-segment-unknown-type.img.sh
+@@ -17,7 +17,7 @@
+ generate()
+ {
+ 	# remove mandatory encryption field
+-	json_str=$(jq -c '.segments."0" = {type:"some_type", offset: .segments."0".offset, size: .segments."0".size, a_field:0}' $TMPDIR/json0)
++	json_str=$(_jq '.segments."0" = {type:"some_type", offset: .segments."0".offset, size: .segments."0".size, a_field:0}' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -30,7 +30,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."0".type != "some_type"
++	_jq 'if .segments."0".type != "some_type"
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-segment-wrong-backup-key-0.img.sh b/tests/generators/generate-luks2-segment-wrong-backup-key-0.img.sh
+index a5bf8060..74ad4013 100755
+--- a/tests/generators/generate-luks2-segment-wrong-backup-key-0.img.sh
++++ b/tests/generators/generate-luks2-segment-wrong-backup-key-0.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# create illegal backup segment key (used to be bug in 32bit implementations)
+-	json_str=$(jq -c '.segments[(.segments | length + 1 | tostring)] = { "type" : "linear", "offset" : "512", "size" : "512", "flags":["backup-x"]}' $TMPDIR/json0)
++	json_str=$(_jq '.segments[(.segments | length + 1 | tostring)] = { "type" : "linear", "offset" : "512", "size" : "512", "flags":["backup-x"]}' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments | length < 2
++	_jq 'if .segments | length < 2
+ 	       then error("Unexpected segments count") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-segment-wrong-backup-key-1.img.sh b/tests/generators/generate-luks2-segment-wrong-backup-key-1.img.sh
+index 084566dd..465f13be 100755
+--- a/tests/generators/generate-luks2-segment-wrong-backup-key-1.img.sh
++++ b/tests/generators/generate-luks2-segment-wrong-backup-key-1.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# create illegal backup segment key (used to be bug in 32bit implementations)
+-	json_str=$(jq -c '(.segments."0".offset | tonumber) as $i | .segments[range(1;65) | tostring] = { "type" : "linear", "offset" : ($i + 512 | tostring), "size" : "512" } | .segments."268435472" = { "type":"linear","offset":"512","size":"512","flags":["backup-x"]}' $TMPDIR/json0)
++	json_str=$(_jq '(.segments."0".offset | tonumber) as $i | .segments[range(1;65) | tostring] = { "type" : "linear", "offset" : ($i + 512 | tostring), "size" : "512" } | .segments."268435472" = { "type":"linear","offset":"512","size":"512","flags":["backup-x"]}' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments | length < 64
++	_jq 'if .segments | length < 64
+ 	       then error("Unexpected segments count") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-segment-wrong-flags-element.img.sh b/tests/generators/generate-luks2-segment-wrong-flags-element.img.sh
+index 39a1c382..9e23aa3c 100755
+--- a/tests/generators/generate-luks2-segment-wrong-flags-element.img.sh
++++ b/tests/generators/generate-luks2-segment-wrong-flags-element.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# remove mandatory encryption field
+-	json_str=$(jq -c '.segments."0".flags = [ "hello", 1 ]' $TMPDIR/json0)
++	json_str=$(_jq '.segments."0".flags = [ "hello", 1 ]' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."0".flags != [ "hello", 1  ]
++	_jq 'if .segments."0".flags != [ "hello", 1  ]
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-segment-wrong-flags.img.sh b/tests/generators/generate-luks2-segment-wrong-flags.img.sh
+index 22ac9f7e..7a049c79 100755
+--- a/tests/generators/generate-luks2-segment-wrong-flags.img.sh
++++ b/tests/generators/generate-luks2-segment-wrong-flags.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# remove mandatory encryption field
+-	json_str=$(jq -c '.segments."0".flags = "hello"' $TMPDIR/json0)
++	json_str=$(_jq '.segments."0".flags = "hello"' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."0".flags != "hello"
++	_jq 'if .segments."0".flags != "hello"
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-segment-wrong-offset.img.sh b/tests/generators/generate-luks2-segment-wrong-offset.img.sh
+index 69a70430..f2928cf3 100755
+--- a/tests/generators/generate-luks2-segment-wrong-offset.img.sh
++++ b/tests/generators/generate-luks2-segment-wrong-offset.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# remove mandatory encryption field
+-	json_str=$(jq -c '.segments."0".offset = "-42"' $TMPDIR/json0)
++	json_str=$(_jq '.segments."0".offset = "-42"' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."0".offset != "-42"
++	_jq 'if .segments."0".offset != "-42"
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-segment-wrong-size-0.img.sh b/tests/generators/generate-luks2-segment-wrong-size-0.img.sh
+index 0d9c1aea..07798b7f 100755
+--- a/tests/generators/generate-luks2-segment-wrong-size-0.img.sh
++++ b/tests/generators/generate-luks2-segment-wrong-size-0.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# remove mandatory encryption field
+-	json_str=$(jq -c '.segments."0".size = 4096' $TMPDIR/json0)
++	json_str=$(_jq '.segments."0".size = 4096' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."0".size != 4096
++	_jq 'if .segments."0".size != 4096
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-segment-wrong-size-1.img.sh b/tests/generators/generate-luks2-segment-wrong-size-1.img.sh
+index c3e89330..a396be5f 100755
+--- a/tests/generators/generate-luks2-segment-wrong-size-1.img.sh
++++ b/tests/generators/generate-luks2-segment-wrong-size-1.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# remove mandatory encryption field
+-	json_str=$(jq -c '.segments."0".size = "automatic"' $TMPDIR/json0)
++	json_str=$(_jq '.segments."0".size = "automatic"' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."0".size != "automatic"
++	_jq 'if .segments."0".size != "automatic"
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-segment-wrong-size-2.img.sh b/tests/generators/generate-luks2-segment-wrong-size-2.img.sh
+index 83d9c2f8..530d8399 100755
+--- a/tests/generators/generate-luks2-segment-wrong-size-2.img.sh
++++ b/tests/generators/generate-luks2-segment-wrong-size-2.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# remove mandatory encryption field
+-	json_str=$(jq -c '.segments."0".size = "511"' $TMPDIR/json0)
++	json_str=$(_jq '.segments."0".size = "511"' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."0".size != "511"
++	_jq 'if .segments."0".size != "511"
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-segment-wrong-type.img.sh b/tests/generators/generate-luks2-segment-wrong-type.img.sh
+index 0f7a18ef..dac6bec6 100755
+--- a/tests/generators/generate-luks2-segment-wrong-type.img.sh
++++ b/tests/generators/generate-luks2-segment-wrong-type.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# remove mandatory encryption field
+-	json_str=$(jq -c '.segments."0".type = 42' $TMPDIR/json0)
++	json_str=$(_jq '.segments."0".type = 42' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."0".type != 42
++	_jq 'if .segments."0".type != 42
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-uint64-max-segment-size.img.sh b/tests/generators/generate-luks2-uint64-max-segment-size.img.sh
+index ac0c7ee0..d15dbd2d 100755
+--- a/tests/generators/generate-luks2-uint64-max-segment-size.img.sh
++++ b/tests/generators/generate-luks2-uint64-max-segment-size.img.sh
+@@ -17,7 +17,7 @@
+ generate()
+ {
+ 	# UINT64_MAX - 511 (so that it's sector aligned)
+-	json_str=$(jq -c '.segments."0".size = "18446744073709551104"' $TMPDIR/json0)
++	json_str=$(_jq '.segments."0".size = "18446744073709551104"' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -30,7 +30,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."0".size != "18446744073709551104"
++	_jq 'if .segments."0".size != "18446744073709551104"
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-uint64-overflow-segment-size.img.sh b/tests/generators/generate-luks2-uint64-overflow-segment-size.img.sh
+index 9a3ada61..a1672305 100755
+--- a/tests/generators/generate-luks2-uint64-overflow-segment-size.img.sh
++++ b/tests/generators/generate-luks2-uint64-overflow-segment-size.img.sh
+@@ -15,7 +15,7 @@
+ 
+ generate()
+ {
+-	json_str=$(jq -c '.segments."0".size = "18446744073709551616"' $TMPDIR/json0)
++	json_str=$(_jq '.segments."0".size = "18446744073709551616"' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -28,7 +28,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."0".size != "18446744073709551616"
++	_jq 'if .segments."0".size != "18446744073709551616"
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/generate-luks2-uint64-signed-segment-size.img.sh b/tests/generators/generate-luks2-uint64-signed-segment-size.img.sh
+index 2f16e706..6e40e1c9 100755
+--- a/tests/generators/generate-luks2-uint64-signed-segment-size.img.sh
++++ b/tests/generators/generate-luks2-uint64-signed-segment-size.img.sh
+@@ -16,7 +16,7 @@
+ generate()
+ {
+ 	# UINT64_MAX + 1 (it's 512 sector aligned)
+-	json_str=$(jq -c '.segments."0".size = "-512"' $TMPDIR/json0)
++	json_str=$(_jq '.segments."0".size = "-512"' $TMPDIR/json0)
+ 	test ${#json_str} -lt $((LUKS2_JSON_SIZE*512)) || exit 2
+ 
+ 	write_luks2_json "$json_str" $TMPDIR/json0
+@@ -29,7 +29,7 @@ check()
+ 	lib_hdr1_killed || exit 2
+ 
+ 	read_luks2_json0 $TGT_IMG $TMPDIR/json_res0
+-	jq -c 'if .segments."0".size != "-512"
++	_jq 'if .segments."0".size != "-512"
+ 	       then error("Unexpected value in result json") else empty end' $TMPDIR/json_res0 || exit 5
+ }
+ 
+diff --git a/tests/generators/lib.sh b/tests/generators/lib.sh
+index 07365d7b..51d38700 100644
+--- a/tests/generators/lib.sh
++++ b/tests/generators/lib.sh
+@@ -175,6 +175,11 @@ _dd()
+ 	dd $@ status=none
+ }
+ 
++_jq()
++{
++	jq -c "$@"
++}
++
+ write_bin_hdr_size() {
+ 	printf '%016x' $2 | xxd -r -p -l 16 | _dd of=$1 bs=8 count=1 seek=1 conv=notrunc
+ }
+-- 
+2.53.0
+

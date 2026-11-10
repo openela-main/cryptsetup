@@ -1,7 +1,7 @@
 Summary: Utility for setting up encrypted disks
 Name: cryptsetup
-Version: 2.8.1
-Release: 3%{?dist}
+Version: 2.8.6
+Release: 2%{?dist}
 License: GPLv2+ and LGPLv2+
 URL: https://gitlab.com/cryptsetup/cryptsetup
 BuildRequires: autoconf, automake, libtool, gettext-devel,
@@ -16,18 +16,28 @@ Obsoletes: %{name}-reencrypt <= %{version}
 Provides: %{name}-reencrypt = %{version}
 
 %global upstream_version %{version}
-Source0: https://www.kernel.org/pub/linux/utils/cryptsetup/v2.7/cryptsetup-%{upstream_version}.tar.xz
+Source0: https://www.kernel.org/pub/linux/utils/cryptsetup/v2.8/cryptsetup-%{upstream_version}.tar.xz
 
 Patch0001: %{name}-Add-FIPS-related-error-message-in-keyslot-add-code.patch
 Patch0002: %{name}-Enable-to-use-Argon2-in-FIPS-with-openssl-backend.patch
 Patch0003: %{name}-Warn-if-Argon2-keyslot-is-unlocked-in-FIPS-mode.patch
-Patch0004: %{name}-2.8.2-Improve-check-for-a-function-attribute-support.patch
-Patch0005: %{name}-2.8.2-Read-integrity-profile-info-from-top-level-device.patch
-Patch0006: %{name}-2.8.2-Fix-possible-use-of-uninitialized-variable.patch
-Patch0007: %{name}-2.8.2-Reinstate-pbkdf-serialization-flag-in-device-activat.patch
-Patch0008: %{name}-2.8.2-Fix-LUKS2-device-status-in-inline-HW-mode-and-detach.patch
-Patch0009: %{name}-2.8.2-Set-inline-integrity-flag-if-no-underlying-dm-integr.patch
-Patch0010: %{name}-2.8.4-Fix-wrong-device-size-status-reports-in-cryptsetup.patch
+Patch0004: %{name}-2.8.7-ci-Replace-jq-with-bash-wrapper.patch
+Patch0005: %{name}-2.8.7-ci-Fix-jq-no-longer-handling-0x00-characters.patch
+Patch0006: %{name}-2.8.7-reencrypt-update-internal-reencryption-error-state-d.patch
+Patch0007: %{name}-2.8.7-reencrypt-merge-REENC_ERR-and-REENC_ROLLBACK-errors-.patch
+Patch0008: %{name}-2.8.7-reencrypt-better-name-error-values-to-match-the-desc.patch
+Patch0009: %{name}-2.8.7-reencrypt-refactor-overlay-devices-teardown.patch
+Patch0010: %{name}-2.8.7-reencrypt-add-more-gracefull-reencryption-error-path.patch
+Patch0011: %{name}-2.8.7-tests-Add-reencryption-error-path-tests.patch
+Patch0012: %{name}-2.8.7-Add-keyring-key-type.patch
+Patch0013: %{name}-2.8.7-Load-volume-keys-in-intermediary-keyring-linked-in-t.patch
+Patch0014: %{name}-2.8.7-Use-unique-intermediary-keyring-name-per-device.patch
+Patch0015: %{name}-2.8.7-tests-revoke-keys-instead-unlinking-from-thread-keyr.patch
+Patch0016: %{name}-2.8.7-tests-verify-VK-and-internal-keyring-cleanup-after-p.patch
+Patch0017: %{name}-2.8.7-tests-refactor-keyring-helpers.patch
+Patch0018: %{name}-2.8.7-tests-verify-intermediary-keyring-cleanup-after-cryp.patch
+Patch0019: %{name}-2.8.7-tests-Make-crypto-check-work-in-local-install-test.patch
+Patch0020: %{name}-2.8.7-test-use-scsi_debug_teardown-helper-in-reencryption-.patch
 
 %description
 The cryptsetup package contains a utility for setting up
@@ -112,6 +122,24 @@ rm -rf %{buildroot}%{_libdir}/*.la
 %ghost %attr(700, -, -) %dir /run/cryptsetup
 
 %changelog
+%changelog
+* Fri Jul 31 2026 Ondrej Kozina <okozina@redhat.com> - 2.8.6-2
+- patch: load volume keys in an intermediary keyring linked in the thread keyring.
+- patch: reinstate few skipped tests due to missing crypto-check test utility.
+- Resolves: 193183
+
+* Fri May 08 2026 Kristina Hanicova <khanicov@redhat.com> - 2.8.6-1
+- Update to cryptsetup 2.8.6.
+- patch: ci: Replace jq with bash wrapper.
+- patch: ci: Fix jq no longer handling 0x00 characters.
+- patch: reencrypt: update internal reencryption error state descriptions.
+- patch: reencrypt: merge REENC_ERR and REENC_ROLLBACK errors in one.
+- patch: reencrypt: better name error values to match the description.
+- patch: reencrypt: refactor overlay devices teardown.
+- patch: reencrypt: add more gracefull reencryption error path.
+- patch: tests: Add reencryption error path tests.
+- Resolves: 161183
+
 * Thu Dec 18 2025 Kristina Hanicova <khanicov@redhat.com> - 2.8.1-3
 - patch: Read integrity profile info from top level device.
 - patch: Fix possible use of uninitialized variable.
